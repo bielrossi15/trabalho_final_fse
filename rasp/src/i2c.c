@@ -8,7 +8,7 @@
 #include <fcntl.h>
 #include <time.h>
 #include "bme280.h"
-#include "bme280_i2c.h"
+#include "i2c.h"
 
 struct sensor {
     uint8_t addr;
