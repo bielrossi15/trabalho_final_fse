@@ -4,6 +4,7 @@ xSemaphoreHandle conexaoWifiSemaphore;
 xSemaphoreHandle conexaoMQTTSemaphore;
 
 extern char topicoComodo[100];
+extern int estadoLed;
 
 void conectadoWifi(void *params)
 {
@@ -17,6 +18,22 @@ void conectadoWifi(void *params)
   }
 }
 
+int criaJson (cJSON *espInfo,cJSON *titulo,char nome[],int info){
+  
+  titulo = cJSON_CreateNumber(info);
+  if (titulo == NULL)
+  {
+    ESP_LOGE("JSON", "erro ao criar o json, tentando novamente em 3 segundos\n");
+    vTaskDelay(3000 / portTICK_PERIOD_MS);
+    return 1;
+  }
+
+  cJSON_AddItemToObject(espInfo, nome, titulo);
+  return 0;
+}
+
+
+
 void trataComunicacaoComServidor(void * params)
 {
   char mensagem[50];
@@ -24,40 +41,41 @@ void trataComunicacaoComServidor(void * params)
   {
     while(true)
     {
-      //printf("Temperature is %d \n", DHT11_read().temperature);
-      //printf("Humidity is %d\n", DHT11_read().humidity);
-      //printf("Status code is %d\n", DHT11_read().status);
+      int temperature,humidity;
+      while(temperature = DHT11_read().temperature,temperature<0){
+        ESP_LOGE("TEMPERATURA","erro ao ler a temperatura, tentando novamente em 3 segundos\n");
+        vTaskDelay(3000 / portTICK_PERIOD_MS);
+      };
+      while (humidity = DHT11_read().humidity, humidity < 0){
+        ESP_LOGE("UMIDADE", "erro ao ler a umidade, tentando novamente em 3 segundos\n");
+        vTaskDelay(3000 / portTICK_PERIOD_MS);
+      }
+
+      
 
       cJSON *espInfo = cJSON_CreateObject();
-      if (espInfo == NULL)
+      while(espInfo == NULL)
       {
-        printf("erro1\n");
-        return;
+        cJSON_Delete(espInfo);
+        ESP_LOGE("JSON", "erro ao criar o objeto json, tentando novamente em 3 segundos\n");
+        vTaskDelay(3000 / portTICK_PERIOD_MS);
+        espInfo = cJSON_CreateObject();
       }
 
       cJSON *temperatura = NULL;
-      temperatura = cJSON_CreateNumber(DHT11_read().temperature);
-      if (temperatura == NULL)
-      {
-        printf("erro2\n");
-        return;
-      }
-
-      cJSON_AddItemToObject(espInfo, "temperatura", temperatura);
+      while(criaJson(espInfo, temperatura, "temperatura", temperature));
 
       cJSON *umidade = NULL;
-      umidade = cJSON_CreateNumber(DHT11_read().humidity);
-      if (umidade == NULL)
-      {
-        printf("erro3\n");
-        return;
-      }
+      while (criaJson(espInfo, umidade, "umidade", humidity));
 
-      cJSON_AddItemToObject(espInfo, "umidade", umidade);
+      ligaDesligaLed();
+      cJSON *saida = NULL;
+      while (criaJson(espInfo, saida, "saida", estadoLed));
 
-      char *teste = cJSON_Print(espInfo);
-      printf("String de teste = %s\n",teste);
-      mqtt_envia_mensagem(topicoComodo, teste);
+      char *info = cJSON_Print(espInfo);
+    
+      printf("String de info = %s\n",info);
+      mqtt_envia_mensagem(topicoComodo, info);
       vTaskDelay(30000 / portTICK_PERIOD_MS);
       cJSON_Delete(espInfo);
     }
@@ -70,13 +88,16 @@ void app_main(void)
   // Inicializa o NVS
   esp_err_t ret = nvs_flash_init();
   DHT11_init(GPIO_NUM_4);
+  inicializaLed();
+  
   if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND)
   {
+   
     ESP_ERROR_CHECK(nvs_flash_erase());
     ret = nvs_flash_init();
-    }
+  }
     ESP_ERROR_CHECK(ret);
-    
+   
     conexaoWifiSemaphore = xSemaphoreCreateBinary();
     conexaoMQTTSemaphore = xSemaphoreCreateBinary();
     wifi_start();

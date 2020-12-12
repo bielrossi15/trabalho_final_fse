@@ -12,12 +12,15 @@ void trataComunicacaoComServidor(void *params);
 #include "esp_log.h"
 #include "freertos/semphr.h"
 #include "wifi.h"
-#include "mqtt.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "driver/gpio.h"
 #include "sdkconfig.h"
+
+
+#include "mqtt.h"
 #include "dht11.h"
+#include "led.h"
 
 
 #endif

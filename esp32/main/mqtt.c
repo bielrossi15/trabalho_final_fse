@@ -29,15 +29,27 @@ void conexaoEsp(){
     char topicoMqttConnected[100] = "fse2020/170013278/dispositivos/";
     getMacAddress();
     strcat(topicoMqttConnected, macAddress);
-    mqtt_envia_mensagem(topicoMqttConnected, "Esp conectada");
+
+    cJSON *mqtt = cJSON_CreateObject();
+    if (mqtt == NULL)
+    {
+        printf("erro1\n");
+        return;
+    }
+    cJSON *message = NULL;
+    message = cJSON_CreateString(macAddress);
+    cJSON_AddItemToObject(mqtt, "id", message);
+    char *info = cJSON_Print(mqtt);
+
+    mqtt_envia_mensagem(topicoMqttConnected, info);
     mqtt_inscricao(topicoMqttConnected);
-    free(macAddress);
+    //free(macAddress);
 }
 
 void pega_Comodo_MQTT_DATA(char buffer[]){
     
    
-    printf("%s\n", buffer);
+    //printf("%s\n", buffer);
     cJSON *jsonComodo = cJSON_Parse(buffer);
     const cJSON *name = NULL;
     name = cJSON_GetObjectItemCaseSensitive(jsonComodo, "comodo");
@@ -46,7 +58,7 @@ void pega_Comodo_MQTT_DATA(char buffer[]){
         //printf("Checking monitor \"%s\"\n", name->valuestring);
         strcpy(topicoComodo,"fse2020/170013278/");
         strcat(topicoComodo, name->valuestring);
-        printf("%s\n", topicoComodo);
+        //printf("%s\n", topicoComodo);
         mqtt_envia_mensagem(topicoComodo, "Mensagem do distribuido(esp)");
         cJSON_Delete(jsonComodo);
     }
