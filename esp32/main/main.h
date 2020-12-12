@@ -1,0 +1,23 @@
+#ifndef MAIN_H
+#define MAIN_H
+
+void conectadoWifi(void *params);
+void trataComunicacaoComServidor(void *params);
+
+#include <stdio.h>
+#include <string.h>
+#include "nvs_flash.h"
+#include "esp_wifi.h"
+#include "esp_event.h"
+#include "esp_log.h"
+#include "freertos/semphr.h"
+#include "wifi.h"
+#include "mqtt.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "driver/gpio.h"
+#include "sdkconfig.h"
+#include "dht11.h"
+
+
+#endif

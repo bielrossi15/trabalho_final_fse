@@ -1,20 +1,11 @@
-#include <stdio.h>
-#include <string.h>
-#include "nvs_flash.h"
-#include "esp_wifi.h"
-#include "esp_event.h"
-#include "esp_http_client.h"
-#include "esp_log.h"
-#include "freertos/semphr.h"
-#include "wifi.h"
-#include "mqtt.h"
-
-#include <inttypes.h>
+#include "main.h"
 
 xSemaphoreHandle conexaoWifiSemaphore;
 xSemaphoreHandle conexaoMQTTSemaphore;
 
-void conectadoWifi(void * params)
+extern char topicoComodo[100];
+
+void conectadoWifi(void *params)
 {
   while(true)
   {
@@ -33,10 +24,42 @@ void trataComunicacaoComServidor(void * params)
   {
     while(true)
     {
-       float temperatura = 20.0 + (float)rand()/(float)(RAND_MAX/10.0);
-       sprintf(mensagem, "temperatura1: %f", temperatura);
-       //mqtt_envia_mensagem("fse2020/170013278/dispositivos/2462ABE0BC14", mensagem);
-       vTaskDelay(3000 / portTICK_PERIOD_MS);
+      //printf("Temperature is %d \n", DHT11_read().temperature);
+      //printf("Humidity is %d\n", DHT11_read().humidity);
+      //printf("Status code is %d\n", DHT11_read().status);
+
+      cJSON *espInfo = cJSON_CreateObject();
+      if (espInfo == NULL)
+      {
+        printf("erro1\n");
+        return;
+      }
+
+      cJSON *temperatura = NULL;
+      temperatura = cJSON_CreateNumber(DHT11_read().temperature);
+      if (temperatura == NULL)
+      {
+        printf("erro2\n");
+        return;
+      }
+
+      cJSON_AddItemToObject(espInfo, "temperatura", temperatura);
+
+      cJSON *umidade = NULL;
+      umidade = cJSON_CreateNumber(DHT11_read().humidity);
+      if (umidade == NULL)
+      {
+        printf("erro3\n");
+        return;
+      }
+
+      cJSON_AddItemToObject(espInfo, "umidade", umidade);
+
+      char *teste = cJSON_Print(espInfo);
+      printf("String de teste = %s\n",teste);
+      mqtt_envia_mensagem(topicoComodo, teste);
+      vTaskDelay(30000 / portTICK_PERIOD_MS);
+      cJSON_Delete(espInfo);
     }
   }
 }
@@ -46,6 +69,7 @@ void app_main(void)
  
   // Inicializa o NVS
   esp_err_t ret = nvs_flash_init();
+  DHT11_init(GPIO_NUM_4);
   if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND)
   {
     ESP_ERROR_CHECK(nvs_flash_erase());

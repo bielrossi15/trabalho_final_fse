@@ -1,31 +1,12 @@
-#include <stdio.h>
-#include <stdint.h>
-#include <stddef.h>
-#include <string.h>
-#include "esp_system.h"
-#include "esp_event.h"
-#include "esp_netif.h"
-
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-#include "freertos/semphr.h"
-#include "freertos/queue.h"
-
-#include "lwip/sockets.h"
-#include "lwip/dns.h"
-#include "lwip/netdb.h"
-
-#include "esp_log.h"
-#include "mqtt_client.h"
-
 #include "mqtt.h"
-#include "cJSON.h"
+
 
 #define TAG "MQTT"
 
 extern xSemaphoreHandle conexaoMQTTSemaphore;
 esp_mqtt_client_handle_t client;
 char *macAddress;
+char topicoComodo[100] = "fse2020/170013278/";
 void  getMacAddress(){
 
     uint8_t *mac = (uint8_t *)malloc(sizeof(uint8_t) * 15);
@@ -44,6 +25,38 @@ void  getMacAddress(){
 }
    
 
+void conexaoEsp(){
+    char topicoMqttConnected[100] = "fse2020/170013278/dispositivos/";
+    getMacAddress();
+    strcat(topicoMqttConnected, macAddress);
+    mqtt_envia_mensagem(topicoMqttConnected, "Esp conectada");
+    mqtt_inscricao(topicoMqttConnected);
+    free(macAddress);
+}
+
+void pega_Comodo_MQTT_DATA(char buffer[]){
+    
+   
+    printf("%s\n", buffer);
+    cJSON *jsonComodo = cJSON_Parse(buffer);
+    const cJSON *name = NULL;
+    name = cJSON_GetObjectItemCaseSensitive(jsonComodo, "comodo");
+    if (cJSON_IsString(name) && (name->valuestring != NULL))
+    {
+        //printf("Checking monitor \"%s\"\n", name->valuestring);
+        strcpy(topicoComodo,"fse2020/170013278/");
+        strcat(topicoComodo, name->valuestring);
+        printf("%s\n", topicoComodo);
+        mqtt_envia_mensagem(topicoComodo, "Mensagem do distribuido(esp)");
+        cJSON_Delete(jsonComodo);
+    }
+    else
+    {
+        printf("não é string\n");
+    }
+    xSemaphoreGive(conexaoMQTTSemaphore);
+}
+
 static esp_err_t mqtt_event_handler_cb(esp_mqtt_event_handle_t event)
 {
     client = event->client;
@@ -52,16 +65,10 @@ static esp_err_t mqtt_event_handler_cb(esp_mqtt_event_handle_t event)
     switch (event->event_id) {
         case MQTT_EVENT_CONNECTED:
             ESP_LOGI(TAG, "MQTT_EVENT_CONNECTED");
-            xSemaphoreGive(conexaoMQTTSemaphore);
-
-            char topicoMqttConnected[100] = "fse2020/170013278/dispositivos/";
-            getMacAddress();
-            strcat(topicoMqttConnected,macAddress);
-            mqtt_envia_mensagem(topicoMqttConnected, "Esp conectada");
-            mqtt_inscricao(topicoMqttConnected);
-            //free(macAddress);
-            
+           
+            conexaoEsp();
             break;
+
         case MQTT_EVENT_DISCONNECTED:
             ESP_LOGI(TAG, "MQTT_EVENT_DISCONNECTED");
             break;
@@ -79,38 +86,12 @@ static esp_err_t mqtt_event_handler_cb(esp_mqtt_event_handle_t event)
             ESP_LOGI(TAG, "MQTT_EVENT_DATA");
             printf("TOPIC=%.*s\r\n", event->topic_len, event->topic);
             printf("DATA=%.*s\r\n", event->data_len, event->data);
-            char topicoData[100] = "fse2020/170013278/";
-
-            //const cJSON *name = NULL;
             char buffer[100];
-         
             memcpy(buffer, event->data, event->data_len);
-
             buffer[event->data_len] = '\0';
-            printf("%s\n", buffer);
-            cJSON *jsonComodo = cJSON_Parse(buffer);
-            const cJSON *name = NULL;
-            //char *comodo = (char *)malloc(sizeof(char *)*20);
-            char *comodo = (char *) malloc(sizeof(char *)*30);
-            name = cJSON_GetObjectItemCaseSensitive(jsonComodo, "comodo");
-            if (cJSON_IsString(name) && (name->valuestring != NULL))
-            {
-                comodo = name->valuestring;
-                printf("Checking monitor \"%s\"\n", name->valuestring);
-            }else{
-                printf("não é string\n");
-            }
-
-            printf("%s\n",comodo);
-            strcat(topicoData,comodo);
-            //for(int i=0,j=0;j<strlen(comodo);j++,i++){
-              //  printf("%c %d\n",comodo[j],j);
-            //}
-            printf("%s\n",topicoData);
-            //free(comodo);
-            mqtt_envia_mensagem(topicoData, "Mensagem do distribuido(esp)");
-            cJSON_Delete(jsonComodo);
+            pega_Comodo_MQTT_DATA(buffer);
             break;
+
         case MQTT_EVENT_ERROR:
             ESP_LOGI(TAG, "MQTT_EVENT_ERROR");
             break;
