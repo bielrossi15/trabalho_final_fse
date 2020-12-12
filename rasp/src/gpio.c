@@ -51,12 +51,6 @@ void set_lamp_state(int value, int opt)
         case 2:
             bcm2835_gpio_write(L_2, value);
             break;
-        case 3:
-            bcm2835_gpio_write(L_3, value);
-            break; 
-        case 4:
-            bcm2835_gpio_write(L_4, value);
-            break;
         default:
             break;
     }

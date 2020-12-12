@@ -6,10 +6,12 @@
 #include <unistd.h>
 #include <pthread.h>
 #include <semaphore.h>
+#include <bcm2835.h>
 
 // including my own files
 #include "i2c.h"
 #include "gpio.h"
+#include "helper.h"
 
 
 // functions to handle signals
@@ -19,16 +21,14 @@ void alarm_handler(int signal);
 // functions to execute on threads
 void * i2c();
 void * get_sensor_values();
-void * client_handler();
-void * server_handler();
 void * sensor_update();
-void * temperature_handler();
+void menu();
+void clear_outputs();
 
 double T = 0.0,
-      H = 0.0,
-      AC_TEMP = 100.0;
+       H = 0.0;
 
-int lamp[4],
+int lamp[2],
     sp[2],
     so[4],
     sp_counter[2],
@@ -65,15 +65,8 @@ void sig_handler(int signal)
 {
     printf("\nReceived signal %d, terminating program...\n", signal);
     alarm(0);
-    pthread_cancel(t0);
-    close_sockets();
-    close_socket();
     set_lamp_state(0, 1);
     set_lamp_state(0, 2);
-    set_lamp_state(0, 3);
-    set_lamp_state(0, 4);
-    set_ac_state(0, 1);
-    set_ac_state(0, 2);
     bcm2835_close();
     exit(0);
 }
@@ -127,7 +120,6 @@ void menu()
     short cs = 0;
 
     int l, on_off;
-    double temp, h;
 
     clear_outputs();
 
@@ -138,7 +130,7 @@ void menu()
     switch (cs)
     {
         case 1:
-            printf("T -> %lf\nH -> %lf\n", H, T);
+            printf("T -> %lf\nH -> %lf\n", T, H);
             
             for(int i = 0; i < *(&lamp + 1) - lamp; i++)
                 printf("LAMP_%d -> %d\n", i+1, lamp[i]);
@@ -170,7 +162,7 @@ void menu()
             printf("Wich lamp you like to control? (1-2)\n");
             scanf("%d", &l);
 
-            printf("0 - off 1 - On\n");
+            printf("0 - off 1 - on\n");
             scanf("%d", &on_off);
             
             set_lamp_state(on_off, l);
