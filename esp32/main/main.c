@@ -4,7 +4,8 @@ xSemaphoreHandle conexaoWifiSemaphore;
 xSemaphoreHandle conexaoMQTTSemaphore;
 
 extern char topicoComodo[100];
-int estado=0;
+extern int estadoLed;
+extern int clickBotao;
 
 void conectadoWifi(void *params)
 {
@@ -68,9 +69,12 @@ void trataComunicacaoComServidor(void * params)
       cJSON *umidade = NULL;
       while (criaJson(espInfo, umidade, "umidade", humidity));
 
-      estado = ligaDesligaLed(estado);
+     
       cJSON *saida = NULL;
-      while (criaJson(espInfo, saida, "saida", estado));
+      while (criaJson(espInfo, saida, "saida", estadoLed));
+
+      cJSON *entrada = NULL;
+      while (criaJson(espInfo, entrada, "entrada", clickBotao));
 
       char *info = cJSON_Print(espInfo);
     
@@ -88,20 +92,25 @@ void app_main(void)
   // Inicializa o NVS
   esp_err_t ret = nvs_flash_init();
   DHT11_init(GPIO_NUM_4);
+  initializaBotao();
   inicializaLed();
-  
+
   if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND)
   {
    
     ESP_ERROR_CHECK(nvs_flash_erase());
     ret = nvs_flash_init();
   }
-    ESP_ERROR_CHECK(ret);
-   
-    conexaoWifiSemaphore = xSemaphoreCreateBinary();
-    conexaoMQTTSemaphore = xSemaphoreCreateBinary();
-    wifi_start();
+  
+  ESP_ERROR_CHECK(ret);
+  
+  conexaoWifiSemaphore = xSemaphoreCreateBinary();
+  conexaoMQTTSemaphore = xSemaphoreCreateBinary();
+  wifi_start();
 
-    xTaskCreate(&conectadoWifi,  "Conexão ao MQTT", 4096, NULL, 1, NULL);
-    xTaskCreate(&trataComunicacaoComServidor, "Comunicação com Broker", 4096, NULL, 1, NULL);
+  xTaskCreate(&conectadoWifi,  "Conexão ao MQTT", 4096, NULL, 1, NULL);
+  xTaskCreate(&trataComunicacaoComServidor, "Comunicação com Broker", 4096, NULL, 1, NULL);
+  xTaskCreate(&trataInterrupcaoBotao, "Trata botão", 4096, NULL, 1, NULL);
+
+
 }
