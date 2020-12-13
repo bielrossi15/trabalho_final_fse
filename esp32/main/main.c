@@ -5,6 +5,7 @@ xSemaphoreHandle conexaoMQTTSemaphore;
 
 extern char topicoComodo[100];
 extern int estadoLed;
+extern int clickBotao;
 
 void conectadoWifi(void *params)
 {
@@ -72,6 +73,9 @@ void trataComunicacaoComServidor(void * params)
       cJSON *saida = NULL;
       while (criaJson(espInfo, saida, "saida", estadoLed));
 
+      cJSON *entrada = NULL;
+      while (criaJson(espInfo, entrada, "entrada", clickBotao));
+
       char *info = cJSON_Print(espInfo);
     
       printf("String de info = %s\n",info);
@@ -88,8 +92,9 @@ void app_main(void)
   // Inicializa o NVS
   esp_err_t ret = nvs_flash_init();
   DHT11_init(GPIO_NUM_4);
+  initializaBotao();
   inicializaLed();
-  
+
   if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND)
   {
    
@@ -104,4 +109,5 @@ void app_main(void)
 
     xTaskCreate(&conectadoWifi,  "Conexão ao MQTT", 4096, NULL, 1, NULL);
     xTaskCreate(&trataComunicacaoComServidor, "Comunicação com Broker", 4096, NULL, 1, NULL);
+    xTaskCreate(&trataInterrupcaoBotao, "Trata botão", 4096, NULL, 1, NULL);
 }

@@ -21,6 +21,6 @@ void trataComunicacaoComServidor(void *params);
 #include "mqtt.h"
 #include "dht11.h"
 #include "led.h"
-
+#include "botao.h"
 
 #endif
