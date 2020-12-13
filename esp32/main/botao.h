@@ -8,7 +8,8 @@
 #include "freertos/queue.h"
 #include "esp_log.h"
 #include "driver/gpio.h"
-
+#include "main.h"
+#include "mqtt.h"
 #define BOTAO 0
 
 void initializaBotao();

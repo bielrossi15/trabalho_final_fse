@@ -3,7 +3,7 @@
 xQueueHandle filaDeInterrupcao;
 
 int clickBotao=0;
-
+extern char topicoComodo[100];
 static void IRAM_ATTR gpio_isr_handler(void *args)
 {
     int pino = (int)args;
@@ -28,19 +28,22 @@ void initializaBotao()
    
 }
 
-void trataBotao(void *params)
-{
-    // Testa o Botão utilizando polling
-    printf("Botao\n");
-    while (true)
+void mandaMensagemPush(){
+    cJSON *botaoPush = cJSON_CreateObject();
+    while (botaoPush == NULL)
     {
-        int estado_botao = gpio_get_level(BOTAO);
-        vTaskDelay(100 / portTICK_PERIOD_MS);
-        printf("Botao = %d\n",estado_botao);
+        cJSON_Delete(botaoPush);
+        ESP_LOGE("JSON", "erro ao criar o objeto json, tentando novamente em 3 segundos\n");
+        vTaskDelay(3000 / portTICK_PERIOD_MS);
+        botaoPush = cJSON_CreateObject();
     }
+    cJSON *entrada = NULL;
+    while (criaJson(botaoPush, entrada, "entrada", clickBotao));
+    char *info = cJSON_Print(botaoPush);
+    printf("String de info = %s\n", info);
+    mqtt_envia_mensagem(topicoComodo, info);
+    cJSON_Delete(botaoPush);
 }
-
-
 
 void trataInterrupcaoBotao(void *params)
 {
@@ -63,7 +66,7 @@ void trataInterrupcaoBotao(void *params)
 
                 clickBotao=!clickBotao;
                 printf("%d\n",clickBotao);
-
+                mandaMensagemPush();
                 // Habilitar novamente a interrupção
                 vTaskDelay(50 / portTICK_PERIOD_MS);
                 gpio_isr_handler_add(pino, gpio_isr_handler, (void *)pino);

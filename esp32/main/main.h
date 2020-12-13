@@ -1,9 +1,6 @@
 #ifndef MAIN_H
 #define MAIN_H
 
-void conectadoWifi(void *params);
-void trataComunicacaoComServidor(void *params);
-
 #include <stdio.h>
 #include <string.h>
 #include "nvs_flash.h"
@@ -22,5 +19,11 @@ void trataComunicacaoComServidor(void *params);
 #include "dht11.h"
 #include "led.h"
 #include "botao.h"
+
+void conectadoWifi(void *params);
+void trataComunicacaoComServidor(void *params);
+int criaJson(cJSON *espInfo, cJSON *titulo, char nome[], int info);
+
+
 
 #endif

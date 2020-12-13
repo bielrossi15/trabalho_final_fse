@@ -65,7 +65,7 @@ void pega_Comodo_MQTT_DATA(char buffer[]){
     }
     else 
     {
-        atributte = cJSON_GetObjectItemCaseSensitive(jsonComodo, "estado");
+        atributte = cJSON_GetObjectItemCaseSensitive(jsonComodo, "saida");
         if (cJSON_IsNumber(atributte) && (atributte->valueint == 0 || atributte->valueint == 1))
         {
             printf("%d\n",atributte->valueint);
