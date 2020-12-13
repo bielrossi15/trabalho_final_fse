@@ -7,6 +7,9 @@ extern xSemaphoreHandle conexaoMQTTSemaphore;
 esp_mqtt_client_handle_t client;
 char *macAddress;
 char topicoComodo[100] = "fse2020/170013278/";
+
+int estado = 0;
+
 void  getMacAddress(){
 
     uint8_t *mac = (uint8_t *)malloc(sizeof(uint8_t) * 15);
@@ -51,29 +54,33 @@ void pega_Comodo_MQTT_DATA(char buffer[]){
    
     //printf("%s\n", buffer);
     cJSON *jsonComodo = cJSON_Parse(buffer);
-    const cJSON *name = NULL;
-    name = cJSON_GetObjectItemCaseSensitive(jsonComodo, "comodo");
-    if (cJSON_IsString(name) && (name->valuestring != NULL))
+    const cJSON *atributte = NULL;
+    atributte = cJSON_GetObjectItemCaseSensitive(jsonComodo, "comodo");
+    if (cJSON_IsString(atributte) && (atributte->valuestring != NULL))
     {
-        //printf("Checking monitor \"%s\"\n", name->valuestring);
         strcpy(topicoComodo,"fse2020/170013278/");
-        strcat(topicoComodo, name->valuestring);
-        //printf("%s\n", topicoComodo);
-        mqtt_envia_mensagem(topicoComodo, "Mensagem do distribuido(esp)");
+        strcat(topicoComodo, atributte->valuestring);
         cJSON_Delete(jsonComodo);
+        xSemaphoreGive(conexaoMQTTSemaphore);
     }
-    else
+    else 
     {
-        printf("não é string\n");
+        atributte = cJSON_GetObjectItemCaseSensitive(jsonComodo, "estado");
+        if (cJSON_IsNumber(atributte) && (atributte->valueint == 0 || atributte->valueint == 1))
+        {
+            printf("%d\n",atributte->valueint);
+            estado = ligaDesligaLed(atributte->valueint);
+            xSemaphoreGive(conexaoMQTTSemaphore);
+        }
     }
-    xSemaphoreGive(conexaoMQTTSemaphore);
+    
 }
 
 static esp_err_t mqtt_event_handler_cb(esp_mqtt_event_handle_t event)
 {
     client = event->client;
     int msg_id;
-    
+
     switch (event->event_id) {
         case MQTT_EVENT_CONNECTED:
             ESP_LOGI(TAG, "MQTT_EVENT_CONNECTED");

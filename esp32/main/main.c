@@ -4,7 +4,7 @@ xSemaphoreHandle conexaoWifiSemaphore;
 xSemaphoreHandle conexaoMQTTSemaphore;
 
 extern char topicoComodo[100];
-int estado=0;
+extern int estadoLed;
 
 void conectadoWifi(void *params)
 {
@@ -68,9 +68,9 @@ void trataComunicacaoComServidor(void * params)
       cJSON *umidade = NULL;
       while (criaJson(espInfo, umidade, "umidade", humidity));
 
-      estado = ligaDesligaLed(estado);
+     
       cJSON *saida = NULL;
-      while (criaJson(espInfo, saida, "saida", estado));
+      while (criaJson(espInfo, saida, "saida", estadoLed));
 
       char *info = cJSON_Print(espInfo);
     
