@@ -101,13 +101,16 @@ void app_main(void)
     ESP_ERROR_CHECK(nvs_flash_erase());
     ret = nvs_flash_init();
   }
-    ESP_ERROR_CHECK(ret);
-   
-    conexaoWifiSemaphore = xSemaphoreCreateBinary();
-    conexaoMQTTSemaphore = xSemaphoreCreateBinary();
-    wifi_start();
+  
+  ESP_ERROR_CHECK(ret);
+  
+  conexaoWifiSemaphore = xSemaphoreCreateBinary();
+  conexaoMQTTSemaphore = xSemaphoreCreateBinary();
+  wifi_start();
 
-    xTaskCreate(&conectadoWifi,  "Conexão ao MQTT", 4096, NULL, 1, NULL);
-    xTaskCreate(&trataComunicacaoComServidor, "Comunicação com Broker", 4096, NULL, 1, NULL);
-    xTaskCreate(&trataInterrupcaoBotao, "Trata botão", 4096, NULL, 1, NULL);
+  xTaskCreate(&conectadoWifi,  "Conexão ao MQTT", 4096, NULL, 1, NULL);
+  xTaskCreate(&trataComunicacaoComServidor, "Comunicação com Broker", 4096, NULL, 1, NULL);
+  xTaskCreate(&trataInterrupcaoBotao, "Trata botão", 4096, NULL, 1, NULL);
+
+
 }

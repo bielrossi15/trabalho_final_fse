@@ -22,6 +22,7 @@
 #include "mqtt_client.h"
 #include "led.h"
 #include "cJSON.h"
+#include "salvaNvs.h"
 
 void mqtt_start();
 
