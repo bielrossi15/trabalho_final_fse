@@ -13,6 +13,6 @@ void trataComunicacaoComServidor(void *params);
 #define LED 2
 
 void inicializaLed();
-void ligaDesligaLed();
+int ligaDesligaLed();
 
 #endif

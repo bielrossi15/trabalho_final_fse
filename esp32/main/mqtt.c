@@ -33,7 +33,7 @@ void conexaoEsp(){
     cJSON *mqtt = cJSON_CreateObject();
     if (mqtt == NULL)
     {
-        printf("erro1\n");
+        ESP_LOGE("CONEXAOESP", "erro ao criar o objeto json, tentando novamente em 3 segundos\n");
         return;
     }
     cJSON *message = NULL;

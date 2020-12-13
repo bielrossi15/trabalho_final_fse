@@ -8,9 +8,10 @@ void inicializaLed(){
 }
 
 
-void ligaDesligaLed(){
+int ligaDesligaLed(int estado){
 
-    estadoLed=!estadoLed;
-    gpio_set_level(LED, estadoLed);
+    estado=!estado;
+    gpio_set_level(LED, estado);
+    return estado;
 
 }
