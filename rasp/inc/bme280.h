@@ -57,6 +57,10 @@ extern "C" {
 /* Header includes */
 #include "bme280_defs.h"
 
+float * temperature_humidity();
+void trata_interrupcao_I2C();
+int initI2C();
+
 /**
  * \ingroup bme280
  * \defgroup bme280ApiInit Initialization

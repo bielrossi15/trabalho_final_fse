@@ -1,84 +1,100 @@
-#include <stdio.h>
-#include <stdlib.h>
+#include "gpio.h"
 #include <bcm2835.h>
-#include <gpio.h>
 
-#define L_1 RPI_V2_GPIO_P1_11 // KITCHEN
-#define L_2 RPI_V2_GPIO_P1_12 // LIVING ROOM
 
-#define SP_1 RPI_V2_GPIO_P1_22 // LIVING ROOM
-#define SP_2 RPI_V2_GPIO_P1_37 // KITCHEN
+struct device sensors[] = {
+    {SENSOR_PRESENCA_COZINHA,LOW}, 
+    {SENSOR_PRESENCA_SALA,LOW}, 
+    {SENSOR_ABERTURA_PORTA_COZINHA,LOW},
+    {SENSOR_ABERTURA_JANELA_COZINHA,LOW}, 
+    {SENSOR_ABERTURA_PORTA_SALA,LOW}, 
+    {SENSOR_ABERTURA_JANELA_SALA,LOW}};
 
-#define SO_1 RPI_V2_GPIO_P1_29 // KITCHEN DOOR
-#define SO_2 RPI_V2_GPIO_P1_31 // KITCHEN WINDOW
-#define SO_3 RPI_V2_GPIO_P1_32 // LIVING ROOM DOOR
-#define SO_4 RPI_V2_GPIO_P1_36 // LIVING ROOM WINDOW
+struct device machines[] = {
+    {LAMPADA_01,LOW},
+    {LAMPADA_02,LOW}};
 
-void configure_pins()
+
+volatile int restartClient;
+int sensorsSize = 8,machinesSize=6;
+
+extern struct atualizacao updateValues;
+extern int tocaAlarme;
+
+int gpioLigaEquipamentos(int option)
 {
-    if(!bcm2835_init())
-    {
-        fprintf(stderr, "Error initializing bcm2835\n");
-        return;
-    }
+    bcm2835_gpio_write(sensors[0].port, 1);
+    bcm2835_gpio_write(machines[option].port, !machines[option].state);
+    machines[option].state = !machines[option].state;
 
-    // output pins
-    bcm2835_gpio_fsel(L_1, BCM2835_GPIO_FSEL_OUTP);
-    bcm2835_gpio_fsel(L_2, BCM2835_GPIO_FSEL_OUTP);
 
-    // input pins
-    bcm2835_gpio_fsel(SP_1, BCM2835_GPIO_FSEL_INPT);
-    bcm2835_gpio_fsel(SP_2, BCM2835_GPIO_FSEL_INPT);
-    bcm2835_gpio_fsel(SO_1, BCM2835_GPIO_FSEL_INPT);
-    bcm2835_gpio_fsel(SO_2, BCM2835_GPIO_FSEL_INPT);
-    bcm2835_gpio_fsel(SO_3, BCM2835_GPIO_FSEL_INPT);
-    bcm2835_gpio_fsel(SO_4, BCM2835_GPIO_FSEL_INPT);
-
+    return 1;
 }
 
-void set_lamp_state(int value, int opt)
-{
-    if(value != 0 && value != 1)
-    {
-        return;
+void gpioSensoresPresenca(){
+       
+    struct atualizacao * rapidUpdate = malloc(sizeof(struct atualizacao));
+    rapidUpdate->temperatura = -1.0;
+    int cont=0;
+    for(int i=0;i<sensorsSize;i++){
+    
+        sensors[i].state = bcm2835_gpio_lev(sensors[i].port);
+        if(sensors[i].state){
+            cont++;
+            rapidUpdate->sensors[i].state = sensors[i].state;
+        }
     }
 
-    switch(opt)
-    {
-        case 1:
-            bcm2835_gpio_write(L_1, value);
-            break;
-        case 2:
-            bcm2835_gpio_write(L_2, value);
-            break;
-        default:
-            break;
+    if(cont > 0 && tocaAlarme == 1){
+        system("omxplayer --no-keys example.mp3 > /dev/null 2>&1 & ");
+        // printf("tocou\n");
     }
 }
 
+int init_bcm(){
+    if (!bcm2835_init()){
+        return 1;
+    }
+   // Configura pinos dos LEDs como saídas
+    
+    for(int i=0;i<machinesSize;i++){
+        bcm2835_gpio_fsel(machines[i].port, BCM2835_GPIO_FSEL_OUTP);
+        bcm2835_gpio_write(machines[i].port, LOW);
 
-void get_state(int lamp[], int sp[], int so[])
-{
-    lamp[0] = bcm2835_gpio_lev(L_1);
-    lamp[1] = bcm2835_gpio_lev(L_2);
+    }
 
-    sp[0] = bcm2835_gpio_lev(SP_1);
-    sp[1] = bcm2835_gpio_lev(SP_2);
+    for(int i=0;i<sensorsSize;i++){
+        bcm2835_gpio_fsel(sensors[i].port, BCM2835_GPIO_FSEL_OUTP);
+        //bcm2835_gpio_write(sensors[i].port, LOW);
+    }
 
-    so[0] = bcm2835_gpio_lev(SO_1);
-    so[1] = bcm2835_gpio_lev(SO_2);
-    so[2] = bcm2835_gpio_lev(SO_3);
-    so[3] = bcm2835_gpio_lev(SO_4);
+    return 0;
 }
 
-
-void get_sensor_state(int sp[], int so[])
+void trata_interrupcao_gpio(void)
 {
-    sp[0] = bcm2835_gpio_lev(SP_1);
-    sp[1] = bcm2835_gpio_lev(SP_2);
+    for(int i=0;i<machinesSize;i++){
+        bcm2835_gpio_write(machines[i].port, LOW);
+    }
+    
+    
+    fprintf(stderr,"fechei a gpio\n");
+    bcm2835_close();
+    
+}
 
-    so[0] = bcm2835_gpio_lev(SO_1);
-    so[1] = bcm2835_gpio_lev(SO_2);
-    so[2] = bcm2835_gpio_lev(SO_3);
-    so[3] = bcm2835_gpio_lev(SO_4);
+void updated_Values(){
+
+
+    for (int i = 0; i < 2; i++)
+    {
+       updateValues.machines[i].state = machines[i].state;
+       updateValues.machines[i].port = machines[i].port;
+    }
+
+    for (int i = 0; i < 6; i++)
+    {
+       updateValues.sensors[i].state = sensors[i].state;
+       updateValues.sensors[i].port = sensors[i].port;
+    }
 }

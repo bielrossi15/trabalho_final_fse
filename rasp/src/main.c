@@ -1,200 +1,152 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <signal.h>
-#include <time.h>
-#include <unistd.h>
-#include <pthread.h>
-#include <semaphore.h>
+#include "main.h"
+
 #include <bcm2835.h>
+#include <errno.h>
 
-// including my own files
-#include "i2c.h"
-#include "gpio.h"
-#include "helper.h"
+pthread_mutex_t lock1 = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t lock2 = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t lock3 = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t lock4 = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t lock5 = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t lock6 = PTHREAD_MUTEX_INITIALIZER;
+
+pthread_t t0, t1, t2,t3,t4,t5,t6,t7,t8;
+
+int contador = 0,contador2=0 ,contador3=0;
+volatile int restartClient=1;
+float * tempHumidity;
+int keepThreading = 1;
+struct atualizacao *update;
+
+volatile double userDefinedTemp = 100.5;
+int tempControlledbyUser;
+
+pthread_t t0,t1,t2,t3;
+
+struct atualizacao updateValues;
+
+int main(){
+    update=  malloc(sizeof(struct atualizacao)); 
+
+    tempHumidity =  (float*) calloc(5,sizeof(float));
+    while(init_bcm());
+    while(initI2C());
+
+    signal(SIGINT, trataInterrupcao);
+    signal(SIGALRM, trataSinalAlarme);
+
+    initNcurs();
+   
+
+    pthread_create(&t1, NULL, gpioSensores, NULL);
+    pthread_create(&t2, NULL, i2c_TemperaturaUmidade, NULL);
+    // pthread_create(&t3, NULL, sendUpdate, NULL);
+    // pthread_create(&t4, NULL, connectClient, NULL);
+    // pthread_create(&t5, NULL, regulateTemperature, NULL);
+    pthread_create(&t6, NULL, ImprimeDados, NULL);
+    pthread_create(&t7, NULL, EntradaUsuario, NULL);
+    pthread_create(&t8, NULL, Erros, NULL);
 
 
-// functions to handle signals
-void sig_handler(int signal);
-void alarm_handler(int signal);
-
-// functions to execute on threads
-void * i2c();
-void * get_sensor_values();
-void * sensor_update();
-void menu();
-void clear_outputs();
-
-double T = 0.0,
-       H = 0.0;
-
-int lamp[2],
-    sp[2],
-    so[4],
-    sp_counter[2],
-    count = 0;
-
-pthread_t t0, t1, t2, t3, t4, t5;
-FILE *file;
-sem_t sem;
-
-
-int main(int argc, const char * argv[])
-{
-    sp_counter[0] = 0;
-    sp_counter[1] = 0;
-
-    configure_pins();
-
-    // all handled signals
-    signal(SIGINT, sig_handler);
-    signal(SIGTERM, sig_handler);
-    signal(SIGTSTP, sig_handler);
-    signal(SIGALRM, alarm_handler);
-    alarm(1);
-
-    while(1)
+    pthread_mutex_lock(&lock5);
+    pthread_mutex_lock(&lock6);
+    
+    ualarm(100000, 100000);
+   
+    while(keepThreading)
     {
-        menu();
+        while(contador3<20); 
+        contador3=0;
     }
+
 
     return 0;
 }
 
-void sig_handler(int signal)
+
+void trataInterrupcao(int sig)
 {
-    printf("\nReceived signal %d, terminating program...\n", signal);
-    alarm(0);
-    set_lamp_state(0, 1);
-    set_lamp_state(0, 2);
-    bcm2835_close();
+    keepThreading=0;
+   
+    clear();
+    endwin();
+    fclose(fp);
+    ualarm(0,0);
+    keepThreading=0;
+    
+    pthread_cancel(t1);
+    pthread_cancel(t2);
+    pthread_mutex_unlock(&lock1),
+    pthread_mutex_unlock(&lock2);
+    pthread_mutex_unlock(&lock6);
+    pthread_mutex_destroy(&lock1);
+    pthread_mutex_destroy(&lock2);
+    pthread_mutex_destroy(&lock6);
+    
+    pthread_join(t1,NULL);
+    pthread_join(t2,NULL);
+
+    
+    //fprintf(stderr,"Passei das threads\n");
+    trata_interrupcao_gpio();
+    trata_interrupcao_I2C();
+    free(update);
+    free(tempHumidity);
+
     exit(0);
 }
 
-void alarm_handler(int signal)
+void *gpioSensores(void *arg)
 {
-    pthread_create(&t0, NULL, i2c, NULL);
-    pthread_create(&t1, NULL, get_sensor_values, NULL);
-    alarm(1);
-}   
-
-void * i2c()
-{
-    initialize_bme("/dev/i2c-1", &T, &H);
-}
-
-void * get_sensor_values()
-{
-    get_state(lamp, sp, so);
-}
-
-
-// void * sensor_status()
-// {
-//     for(int i = 0; i < 2; i++)
-//     {
-//         if(sp[i] != sp_old[i] && sp[i] == 1)
-//         {
-//             system("omxplayer ../4cd33cb95f308477d770210720e9d74d1ab0fa58.mp3 > /dev/null 2>&1");
-//             file_write(3, 0, 0, 0.0);
-//         }
-//         sp_old[i] = sp[i];
-//     }
-
-//     for(int i = 0; i < 6; i++)
-//     {
-//         if(so[i] != so_old[i] && so[i] == 1)
-//         {
-//             system("omxplayer ../4cd33cb95f308477d770210720e9d74d1ab0fa58.mp3 > /dev/null 2>&1");
-//             file_write(3, 0, 0, 0.0);
-//         }
-
-//         so_old[i] = so[i];
-//     }
-
-// }
-
-void menu()
-{
-    
-    short cs = 0;
-
-    int l, on_off;
-
-    clear_outputs();
-
-    printf("========== INTERACTIVE MENU ==========\n  1 -> Print values\n  2 -> Turn on/off lamps\n ======================================\n");
-    printf("-> ");
-    scanf("%hd", &cs);
-    printf("\n");
-    switch (cs)
+    while (keepThreading)
     {
-        case 1:
-            printf("T -> %lf\nH -> %lf\n", T, H);
-            
-            for(int i = 0; i < *(&lamp + 1) - lamp; i++)
-                printf("LAMP_%d -> %d\n", i+1, lamp[i]);
+        pthread_mutex_lock(&lock1);
+        gpioSensoresPresenca();
+    }
 
-            for(int i = 0; i < *(&sp + 1) - sp; i++)
-                printf("SP_%d -> %d\n", i+1, sp[i]);
-            
-            for(int i = 0; i < *(&so + 1) - so; i++)
-                printf("SO_%d -> %d\n", i+1, so[i]);
-
-            char q;
-            printf("PRESS 'q' TO RETURN TO MENU");
-        
-            while(1)
-            {
-                scanf("%c", &q);
-                printf("\n");
-
-                if(q == 'q')
-                {
-                    clear_outputs();
-                    break;
-                }
-            }
-
-        break;
-
-        case 2:
-            printf("Wich lamp you like to control? (1-2)\n");
-            scanf("%d", &l);
-
-            printf("0 - off 1 - on\n");
-            scanf("%d", &on_off);
-            
-            set_lamp_state(on_off, l);
-            char j;
-            printf("PRESS 'q' TO RETURN TO MENU");
-
-            while(1)
-            {
-                scanf("%c", &j);
-                printf("\n");
-
-                if(j == 'q')
-                {
-                    clear_outputs();
-                    break;
-                }
-            }
-            file_write(0, l, on_off);
-        break;
-
-        default:
-        break;
-        }
+    return NULL;
 }
 
-void clear_outputs() 
+void trataSinalAlarme(int sinal)
 {
-    #if defined _WIN32
-        system("cls");
-    #elif defined (__LINUX__) || defined(__gnu_linux__) || defined(__linux__)
-        system("clear");
-    #elif defined (__APPLE__)
-        system("clear");
-    #endif
+    pthread_mutex_unlock(&lock1);
+    if(contador==8){
+        pthread_mutex_unlock(&lock2); 
+        contador=0;
+    }
+
+    if(contador2==10){
+        updated_Values();
+        pthread_mutex_unlock(&lock6); 
+        pthread_mutex_unlock(&lock5);
+        contador2=0;
+    }
+
+    if(contador3==20){
+        pthread_mutex_unlock(&lock4);  
+        contador3=0;  
+    }
+    
+   
+    contador++;
+    contador2++;
+    contador3++;
+}
+
+
+void * i2c_TemperaturaUmidade(){
+    //get external temperature
+    float *temp = malloc(sizeof(float)*5);
+    while(keepThreading){
+        pthread_mutex_lock(&lock2);
+        temp = temperature_humidity();
+        if(temp[0]>0){
+            updateValues.temperatura = temp[0]; 
+        }
+        if(temp[1]>0){
+            updateValues.umidade = temp[1]; 
+        }
+
+    }
+    return NULL;
 }
