@@ -92,8 +92,6 @@ void * EntradaUsuario1(void* parameters){
 
         if(cadastrar_dispositivo == 1)
         {
-            // clearThenBox(0);
-            // if(strcmp(string, ""))
             EntradaUsuario2(string);
         }
 
@@ -155,6 +153,7 @@ void EntradaUsuario2(char val[])
 
 
     cadastrar_dispositivo = 0;
+    count_dispositivos++;
 }
 
 void * ImprimeDados(){
@@ -181,6 +180,15 @@ void * ImprimeDados(){
             mvwprintw(windowImprimeDados, j+3, xMax/10, "Estado Lâmpada %d = %d %*c %s = %d", j+1 , updateValues.machines[j].state,16,' ',sensorsName[j], updateValues.sensors[j].state);
             if(updateValues.sensors[j].state){
                 fprintf(fp,"nenhum, %s , %s", sensorsName[j], asctime(tm));
+            }
+        }
+
+        if(count_dispositivos > 0)
+        {
+            for(int j = 4; j < count_dispositivos + 4; j++)
+            {
+                mvwprintw(windowImprimeDados, (j - 4) + 6, xMax/(xMax - 5), "%s -> T %.2f H %.2f IN %d OUT %d\n\n", mqtt_device[j - 4].room, mqtt_device[j - 4].temp, mqtt_device[j - 4].hmd, mqtt_device[j - 4].in_state, mqtt_device[j - 4].out_state);
+                // mvwprintw(windowImprimeDados, j+3, xMax/(xMax - 5), "%s", mqtt_device[j - 4].room);
             }
         }
 

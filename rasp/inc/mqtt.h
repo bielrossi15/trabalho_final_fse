@@ -9,7 +9,8 @@ struct mqtt_client
     char room[50];
     char in[50];
     char out[50];
-    char state;
+    char in_state;
+    char out_state;
     double temp;
     double hmd;
 };

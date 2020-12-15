@@ -51,7 +51,6 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTClient_message *m
             strcpy(mqtt_device[count_dispositivos].id, ptr);
             dispositivos_para_registrar++;
             cadastrar_dispositivo = 1;
-            count_dispositivos++;
             screen_controler = 1;
         }
         
