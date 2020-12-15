@@ -10,6 +10,7 @@ pthread_mutex_t lock3 = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t lock4 = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t lock5 = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t lock6 = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t lock9 = PTHREAD_MUTEX_INITIALIZER;
 
 pthread_t t0, t1, t2,t3,t4,t5,t6,t7,t8;
 
@@ -21,6 +22,7 @@ struct atualizacao *update;
 
 volatile double userDefinedTemp = 100.5;
 int tempControlledbyUser;
+extern int cadastrar_dispositivo;
 
 pthread_t t0,t1,t2,t3;
 
@@ -48,10 +50,11 @@ int main(){
     // pthread_create(&t4, NULL, connectClient, NULL);
     // pthread_create(&t5, NULL, regulateTemperature, NULL);
     pthread_create(&t6, NULL, ImprimeDados, NULL);
-    pthread_create(&t7, NULL, EntradaUsuario, NULL);
+    pthread_create(&t7, NULL, EntradaUsuario1, NULL);
     pthread_create(&t8, NULL, Erros, NULL);
+    // pthread_create(&t9, NULL, EntradaUsuario2, NULL);
 
-
+    pthread_mutex_lock(&lock9);
     pthread_mutex_lock(&lock5);
     pthread_mutex_lock(&lock6);
     

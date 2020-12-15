@@ -7,6 +7,7 @@
 #include <curses.h>
 #include <unistd.h>
 #include <pthread.h>
+#include <string.h>
 #include "gpio.h"
 
 
@@ -14,7 +15,8 @@ void initNcurs();
 void  createEntradaUsuarioWindow();
 void createImprimeDadosWindow();
 void createErrosWindow();
-void * EntradaUsuario(void* parameters);
+void * EntradaUsuario1(void* parameters);
+void EntradaUsuario2(char val[]);
 void * ImprimeDados();
 void * Erros(void* parameters);
 void clearThenBox(int option);

@@ -39,13 +39,6 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTClient_message *m
         printf("error\n");
     }else if(!strcmp(ptr, "dispositivos")){
         ptr = strtok(NULL, delim); // mac
-        for(int i = 0; i < count_dispositivos; i++)
-        {
-            if(ptr == mqtt_device[i].id)
-            {
-                control_publish_message = 1;
-            }
-        }
 
         //if(dispositivos_para_registrar == 5) return 1;
         cJSON * json = cJSON_Parse(message->payload);
@@ -53,7 +46,7 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTClient_message *m
         
         char * rendered = cJSON_Print(json);
 
-        if(id && control_publish_message == 0)
+        if(id)
         {
             strcpy(mqtt_device[count_dispositivos].id, ptr);
             dispositivos_para_registrar++;

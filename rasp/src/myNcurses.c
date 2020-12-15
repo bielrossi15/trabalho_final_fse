@@ -13,6 +13,9 @@ extern int count_dispositivos;
 extern int cadastrar_dispositivo;
 extern MQTTClient client;
 
+pthread_mutex_t lockEntrada1 = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t lockEntrada2 = PTHREAD_MUTEX_INITIALIZER;
+
 void initNcurs()
 {
     fp=fopen("relatorio.csv","w");
@@ -74,26 +77,38 @@ void createErrosWindow(){
 }
 
 
-void * EntradaUsuario(void* parameters){
+void * EntradaUsuario1(void* parameters){
 
-   if(cadastrar_dispositivo == 1)
-   {
+    // pthread_mutex_lock(&lockEntrada1);
+
     mvwprintw(windowEntradaUsuario, 1, 1, "Escolha um comando de 0 ou 1 para as lampadas ou 2 para alarme");
     mvwprintw(windowEntradaUsuario, 4, 1, "Comando:");
     clearThenBox(0);
     
-    int validation;
-        while(mvwscanw(windowEntradaUsuario, 4, 9, "%d",&validation)){
+    int val;
+    char tmp;
+    char string[512] = "";
+    while(mvwscanw(windowEntradaUsuario, 4, 9, "%d ", &val)){
+
+        if(cadastrar_dispositivo == 1)
+        {
+            // clearThenBox(0);
+            // if(strcmp(string, ""))
+            EntradaUsuario2(string);
+        }
+
+        else
+        {
+            int validation;
             clearThenBox(1);
-            if(cadastrar_dispositivo == 1) { break; }
-            
-            while(validation<0|| validation> 2){
+        
+            while(validation<0|| validation> 2)
+            {
                 mvwprintw(windowEntradaUsuario, 1, 1, "Comando Incorreto. Escolha um comando de 0 ou 1 para as lampadas ou 2 para alarme");
                 clearThenBox(0);
                 
                 mvwscanw(windowEntradaUsuario, 4, 9, "%d",&validation);
                 clearThenBox(1);
-                
             }
             
             if(validation < 2)
@@ -105,34 +120,41 @@ void * EntradaUsuario(void* parameters){
             {
                 tocaAlarme = 1;
             }
-
+                
             mvwprintw(windowEntradaUsuario, 1, 1, "Escolha um comando de 0 ou 1 para as lampadas ou 2 para alarme");
             mvwprintw(windowEntradaUsuario, 4, 1, "Comando:");
             clearThenBox(1);
         }
     }
 
-    else if(cadastrar_dispositivo == 0)
-    {
-        char topic[512];
-        char data[512];
-        sprintf(topic, "%s%s", "fse2020/170013278/dispositivos/", mqtt_device[count_dispositivos].id);
-        wrefresh(windowEntradaUsuario);
-        mvwprintw(windowEntradaUsuario, 1, 1, "Escolha um nome para o novo comodo e para as entradas e saidas dele");
-        mvwprintw(windowEntradaUsuario, 4, 1, "Nomes:");
-        clearThenBox(0);
-
-        while(mvwscanw(windowEntradaUsuario, 4, 9, "%s %s", &mqtt_device[count_dispositivos].room, &mqtt_device[count_dispositivos].in, &mqtt_device[count_dispositivos].out))
-        {
-            sprintf(data, "{ \"comodo\": \"%s\"}", mqtt_device[count_dispositivos].room);
-            mqtt_publish(client, topic, data);
-            clearThenBox(1);
-
-            cadastrar_dispositivo = 0;
-        }
-    }
-
     return NULL;
+}
+
+void EntradaUsuario2(char val[])
+{
+    int yMax, xMax;
+    getmaxyx(stdscr, yMax, xMax);
+    char topic[512];
+    char data[512];
+
+    clearThenBox(1);
+
+    sprintf(topic, "%s%s", "fse2020/170013278/dispositivos/", mqtt_device[count_dispositivos].id);
+    wrefresh(windowEntradaUsuario);
+    mvwprintw(windowEntradaUsuario, 1, 1, "Escolha um nome para o novo comodo%*c", 30, ' ');
+    mvwprintw(windowEntradaUsuario, 4, 1, "Comodo: ");
+    mvwscanw(windowEntradaUsuario, 4, 9, "%s", &mqtt_device[count_dispositivos].room);
+
+    sprintf(data, "{ \"comodo\": \"%s\"}", mqtt_device[count_dispositivos].room);
+    mqtt_publish(client, topic, data);
+    clearThenBox(1);
+
+    mvwprintw(windowEntradaUsuario, 1, 1, "Escolha um comando de 0 ou 1 para as lampadas ou 2 para alarme");
+    mvwprintw(windowEntradaUsuario, 4, 1, "Comando:");
+    mvwprintw(windowImprimeDados, 7 + 3, xMax/10+50, "%*c", 30, ' ');
+
+
+    cadastrar_dispositivo = 0;
 }
 
 void * ImprimeDados(){
@@ -170,10 +192,10 @@ void * ImprimeDados(){
             }
         }
 
-        if(screen_controler == 1)
+        if(screen_controler == 1 && cadastrar_dispositivo == 1)
         {
-            for(int i = 0; i < count_dispositivos; i++)
-                mvwprintw(windowImprimeDados, i + 7 + 3, xMax/10+50, "MAC_%d -> %s", i + 1, mqtt_device[i].id);
+            mvwprintw(windowImprimeDados, 7 + 3, xMax/10+50, "Aperte ENTER para cadastrar quarto");
+            //screen_controler = 0;
         }
         box(windowImprimeDados, 0, 0);
         wrefresh(windowImprimeDados);
@@ -209,7 +231,7 @@ void clearThenBox(int option){
 
 void printError(char erro[500]){
 
-    wprintw(windowImprimeErros, "%s\n ",erro);
+    wprintw(windowImprimeErros, "ERRO -> %s\n ",erro);
 	box(windowImprimeErros, 0, 0);
 	wrefresh(windowImprimeErros);
 
