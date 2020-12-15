@@ -50,7 +50,7 @@ int main(){
     // pthread_create(&t4, NULL, connectClient, NULL);
     // pthread_create(&t5, NULL, regulateTemperature, NULL);
     pthread_create(&t6, NULL, ImprimeDados, NULL);
-    pthread_create(&t7, NULL, EntradaUsuario1, NULL);
+    pthread_create(&t7, NULL, EntradaUsuario, NULL);
     pthread_create(&t8, NULL, Erros, NULL);
     // pthread_create(&t9, NULL, EntradaUsuario2, NULL);
 

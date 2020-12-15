@@ -6,7 +6,7 @@ WINDOW *windowImprimeDados,*windowEntradaUsuario,*windowImprimeErros;
 char * connection;
 
 extern struct atualizacao updateValues;
-extern int tocaAlarme = 0;
+int tocaAlarme = 0;
 extern struct mqtt_client mqtt_device[5];
 int screen_controler= 0;
 extern int count_dispositivos;
@@ -77,7 +77,7 @@ void createErrosWindow(){
 }
 
 
-void * EntradaUsuario1(void* parameters){
+void * EntradaUsuario(void* parameters){
 
     // pthread_mutex_lock(&lockEntrada1);
 
@@ -85,50 +85,50 @@ void * EntradaUsuario1(void* parameters){
     mvwprintw(windowEntradaUsuario, 4, 1, "Comando:");
     clearThenBox(0);
     
-    int val;
-    char tmp;
-    char string[512] = "";
-    while(mvwscanw(windowEntradaUsuario, 4, 9, "%d ", &val)){
+    int validation;
+    while(mvwscanw(windowEntradaUsuario, 4, 9, "%d ", &validation)){
 
         if(cadastrar_dispositivo == 1)
         {
-            EntradaUsuario2(string);
+            enviaNomeComodo();
         }
 
         else
         {
-            int validation;
-            clearThenBox(1);
-        
-            while(validation<0|| validation> 2)
-            {
-                mvwprintw(windowEntradaUsuario, 1, 1, "Comando Incorreto. Escolha um comando de 0 ou 1 para as lampadas ou 2 para alarme");
-                clearThenBox(0);
-                
-                mvwscanw(windowEntradaUsuario, 4, 9, "%d",&validation);
-                clearThenBox(1);
-            }
-            
-            if(validation < 2)
-            {
-                gpioLigaEquipamentos(validation);
-            }
-
-            else 
-            {
-                tocaAlarme = 1;
-            }
-                
-            mvwprintw(windowEntradaUsuario, 1, 1, "Escolha um comando de 0 ou 1 para as lampadas ou 2 para alarme");
-            mvwprintw(windowEntradaUsuario, 4, 1, "Comando:");
-            clearThenBox(1);
+           enviaComandoAparelhos(validation);
         }
     }
 
     return NULL;
 }
+void enviaComandoAparelhos(int validation)
+{
+    clearThenBox(1);
+    
+        while(validation<0|| validation> 2)
+        {
+            mvwprintw(windowEntradaUsuario, 1, 1, "Comando Incorreto. Escolha um comando de 0 ou 1 para as lampadas ou 2 para alarme");
+            clearThenBox(0);
+            
+            mvwscanw(windowEntradaUsuario, 4, 9, "%d",&validation);
+            clearThenBox(1);
+        }
+        
+        if(validation < 2)
+        {
+            gpioLigaEquipamentos(validation);
+        }
 
-void EntradaUsuario2(char val[])
+        else 
+        {
+            tocaAlarme = 1;
+        }
+            
+        mvwprintw(windowEntradaUsuario, 1, 1, "Escolha um comando de 0 ou 1 para as lampadas ou 2 para alarme");
+        mvwprintw(windowEntradaUsuario, 4, 1, "Comando:");
+        clearThenBox(1);
+}
+void enviaNomeComodo()
 {
     int yMax, xMax;
     getmaxyx(stdscr, yMax, xMax);
@@ -185,9 +185,9 @@ void * ImprimeDados(){
 
         if(count_dispositivos > 0)
         {
-            for(int j = 4; j < count_dispositivos + 4; j++)
+            for(int j = 4,i=0; i < count_dispositivos; j++,i++)
             {
-                mvwprintw(windowImprimeDados, (j - 4) + 6, xMax/(xMax - 5), "%s -> T %.2f H %.2f IN %d OUT %d\n\n", mqtt_device[j - 4].room, mqtt_device[j - 4].temp, mqtt_device[j - 4].hmd, mqtt_device[j - 4].in_state, mqtt_device[j - 4].out_state);
+                mvwprintw(windowImprimeDados, (j - 4) + 6, xMax/(xMax - 5), "%s -> T %.2f H %.2f IN %d OUT %d\n\n", mqtt_device[i].room, mqtt_device[i].temp, mqtt_device[i].hmd, mqtt_device[i].in_state, mqtt_device[i].out_state);
                 // mvwprintw(windowImprimeDados, j+3, xMax/(xMax - 5), "%s", mqtt_device[j - 4].room);
             }
         }
@@ -202,7 +202,7 @@ void * ImprimeDados(){
 
         if(screen_controler == 1 && cadastrar_dispositivo == 1)
         {
-            mvwprintw(windowImprimeDados, 7 + 3, xMax/10+50, "Aperte ENTER para cadastrar quarto");
+            mvwprintw(windowImprimeDados, 7 + 3, xMax/10+40, "Aperte ENTER para cadastrar quarto");
             //screen_controler = 0;
         }
         box(windowImprimeDados, 0, 0);
@@ -246,13 +246,4 @@ void printError(char erro[500]){
 }
 
 
-void setClientConection(char msg[500]){
-    connection = msg;
-}
-
-void printClientConection(){
-    int yMax,xMax;
-    getmaxyx(windowImprimeDados, yMax, xMax);
-    mvwprintw(windowImprimeDados, yMax-2,1, "Conexão do Cliente %s\n",connection);
-}
 
