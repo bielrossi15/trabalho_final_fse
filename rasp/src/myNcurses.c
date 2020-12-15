@@ -1,4 +1,5 @@
 #include "myNcurses.h"
+#include "mqtt.h"
 
 WINDOW *windowImprimeDados,*windowEntradaUsuario,*windowImprimeErros;
 
@@ -6,6 +7,11 @@ char * connection;
 
 extern struct atualizacao updateValues;
 extern int tocaAlarme = 0;
+extern struct mqtt_client mqtt_device[5];
+int screen_controler= 0;
+extern int count_dispositivos;
+extern int cadastrar_dispositivo;
+extern MQTTClient client;
 
 void initNcurs()
 {
@@ -70,40 +76,61 @@ void createErrosWindow(){
 
 void * EntradaUsuario(void* parameters){
 
-   
+   if(cadastrar_dispositivo == 1)
+   {
     mvwprintw(windowEntradaUsuario, 1, 1, "Escolha um comando de 0 ou 1 para as lampadas ou 2 para alarme");
     mvwprintw(windowEntradaUsuario, 4, 1, "Comando:");
     clearThenBox(0);
     
     int validation;
-    while(mvwscanw(windowEntradaUsuario, 4, 9, "%d",&validation)){
-       clearThenBox(1);
-        
-        while(validation<0|| validation> 2){
-            mvwprintw(windowEntradaUsuario, 1, 1, "Comando Incorreto. Escolha um comando de 0 ou 1 para as lampadas ou 2 para alarme");
-            clearThenBox(0);
-            
-            mvwscanw(windowEntradaUsuario, 4, 9, "%d",&validation);
+        while(mvwscanw(windowEntradaUsuario, 4, 9, "%d",&validation)){
             clearThenBox(1);
+            if(cadastrar_dispositivo == 1) { break; }
             
-        }
-        
-        if(validation < 2)
-        {
-            gpioLigaEquipamentos(validation);
-        }
+            while(validation<0|| validation> 2){
+                mvwprintw(windowEntradaUsuario, 1, 1, "Comando Incorreto. Escolha um comando de 0 ou 1 para as lampadas ou 2 para alarme");
+                clearThenBox(0);
+                
+                mvwscanw(windowEntradaUsuario, 4, 9, "%d",&validation);
+                clearThenBox(1);
+                
+            }
+            
+            if(validation < 2)
+            {
+                gpioLigaEquipamentos(validation);
+            }
 
-        else 
-        {
-            tocaAlarme = 1;
-        }
+            else 
+            {
+                tocaAlarme = 1;
+            }
 
-        mvwprintw(windowEntradaUsuario, 1, 1, "Escolha um comando de 0 ou 1 para as lampadas ou 2 para alarme");
-        mvwprintw(windowEntradaUsuario, 4, 1, "Comando:");
-        clearThenBox(1);
+            mvwprintw(windowEntradaUsuario, 1, 1, "Escolha um comando de 0 ou 1 para as lampadas ou 2 para alarme");
+            mvwprintw(windowEntradaUsuario, 4, 1, "Comando:");
+            clearThenBox(1);
+        }
     }
 
+    else if(cadastrar_dispositivo == 0)
+    {
+        char topic[512];
+        char data[512];
+        sprintf(topic, "%s%s", "fse2020/170013278/dispositivos/", mqtt_device[count_dispositivos].id);
+        wrefresh(windowEntradaUsuario);
+        mvwprintw(windowEntradaUsuario, 1, 1, "Escolha um nome para o novo comodo e para as entradas e saidas dele");
+        mvwprintw(windowEntradaUsuario, 4, 1, "Nomes:");
+        clearThenBox(0);
 
+        while(mvwscanw(windowEntradaUsuario, 4, 9, "%s %s", &mqtt_device[count_dispositivos].room, &mqtt_device[count_dispositivos].in, &mqtt_device[count_dispositivos].out))
+        {
+            sprintf(data, "{ \"comodo\": \"%s\"}", mqtt_device[count_dispositivos].room);
+            mqtt_publish(client, topic, data);
+            clearThenBox(1);
+
+            cadastrar_dispositivo = 0;
+        }
+    }
 
     return NULL;
 }
@@ -119,8 +146,6 @@ void * ImprimeDados(){
 
     int yMax, xMax;
     getmaxyx(stdscr, yMax, xMax);
-
-    
 
     while(1){
         time_t t = time(NULL);
@@ -145,7 +170,11 @@ void * ImprimeDados(){
             }
         }
 
-
+        if(screen_controler == 1)
+        {
+            for(int i = 0; i < count_dispositivos; i++)
+                mvwprintw(windowImprimeDados, i + 7 + 3, xMax/10+50, "MAC_%d -> %s", i + 1, mqtt_device[i].id);
+        }
         box(windowImprimeDados, 0, 0);
         wrefresh(windowImprimeDados);
         sleep(1);

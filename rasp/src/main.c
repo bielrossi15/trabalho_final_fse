@@ -1,4 +1,5 @@
 #include "main.h"
+#include "mqtt.h"
 
 #include <bcm2835.h>
 #include <errno.h>
@@ -25,6 +26,8 @@ pthread_t t0,t1,t2,t3;
 
 struct atualizacao updateValues;
 
+struct mqtt_client mqtt_device[5];
+
 int main(){
     update=  malloc(sizeof(struct atualizacao)); 
 
@@ -36,7 +39,8 @@ int main(){
     signal(SIGALRM, trataSinalAlarme);
 
     initNcurs();
-   
+    mqtt_configuration();
+
 
     pthread_create(&t1, NULL, gpioSensores, NULL);
     pthread_create(&t2, NULL, i2c_TemperaturaUmidade, NULL);
