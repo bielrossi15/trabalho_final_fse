@@ -39,7 +39,7 @@ void trataComunicacaoComServidor(void *params)
       mandaMensagem("umidade", humidity);
       mandaMensagemEstado();
      
-      vTaskDelay(10000 / portTICK_PERIOD_MS);
+      vTaskDelay(30000 / portTICK_PERIOD_MS);
     }
   }
 }

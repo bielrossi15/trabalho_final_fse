@@ -3,7 +3,7 @@
 xQueueHandle filaDeInterrupcao;
 
 int clickBotao=0;
-extern char topicoComodo[100];
+
 static void IRAM_ATTR gpio_isr_handler(void *args)
 {
     int pino = (int)args;
@@ -49,7 +49,7 @@ void trataInterrupcaoBotao(void *params)
                 }
 
                 clickBotao=!clickBotao;
-                printf("%d\n",clickBotao);
+                
                 mandaMensagemEstado();
                 // Habilitar novamente a interrupção
                 vTaskDelay(50 / portTICK_PERIOD_MS);

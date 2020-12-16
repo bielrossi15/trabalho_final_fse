@@ -1,21 +1,12 @@
 #include "salvaNvs.h"
 
-extern char topicoComodo[100];
+extern char topicoComodo[300];
 
 int le_valor_nvs()
 {
-    // Inicia o acesso à partição padrão nvs
-    //ESP_ERROR_CHECK(nvs_flash_init());
-
-    // Inicia o acesso à partição personalizada
     ESP_ERROR_CHECK(nvs_flash_init_partition("DadosNVS"));
 
     nvs_handle particao_padrao_handle;
-
-    // Abre o acesso à partição nvs
-    //esp_err_t res_nvs = nvs_open("armazenamento", NVS_READONLY, &particao_padrao_handle);
-
-    // Abre o acesso à partição DadosNVS
     esp_err_t res_nvs = nvs_open_from_partition("DadosNVS", "armazenamento", NVS_READONLY, &particao_padrao_handle);
 
     if (res_nvs == ESP_ERR_NVS_NOT_FOUND)
@@ -54,12 +45,10 @@ int le_valor_nvs()
 
 void grava_valor_nvs()
 {
-    //ESP_ERROR_CHECK(nvs_flash_init());
+  
     ESP_ERROR_CHECK(nvs_flash_init_partition("DadosNVS"));
 
     nvs_handle particao_padrao_handle;
-
-    //esp_err_t res_nvs = nvs_open("armazenamento", NVS_READWRITE, &particao_padrao_handle);
     esp_err_t res_nvs = nvs_open_from_partition("DadosNVS", "armazenamento", NVS_READWRITE, &particao_padrao_handle);
 
     if (res_nvs == ESP_ERR_NVS_NOT_FOUND)

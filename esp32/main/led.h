@@ -1,8 +1,6 @@
 #ifndef LED_H
 #define LED_H
 
-void conectadoWifi(void *params);
-void trataComunicacaoComServidor(void *params);
 
 #include <stdio.h>
 #include "sdkconfig.h"
@@ -13,6 +11,6 @@ void trataComunicacaoComServidor(void *params);
 #define LED 2
 
 void inicializaLed();
-int ligaDesligaLed();
+void ligaDesligaLed(int estado);
 
 #endif

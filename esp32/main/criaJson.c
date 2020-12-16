@@ -1,6 +1,6 @@
 #include "criaJson.h"
 
-extern char topicoComodo[100];
+extern char topicoComodo[300];
 extern int estadoLed;
 extern int clickBotao;
 extern char *macAddress;
@@ -50,7 +50,7 @@ void mandaMensagem(char *topico, int info)
     while (criaJson(json, mensagem, topico, info));
 
     char *info2 = cJSON_Print(json);
-    char enviaEstado[200];
+    char enviaEstado[500];
     sprintf(enviaEstado, "%s/%s", topicoComodo, topico);
     mqtt_envia_mensagem(enviaEstado, info2);
     cJSON_Delete(json);
@@ -77,7 +77,7 @@ void mandaMensagemEstado()
     while (criaJson(json, entrada, "entrada", clickBotao));
 
     char *info = cJSON_Print(json);
-    char enviaEstado[200];
+    char enviaEstado[500];
     sprintf(enviaEstado, "%s/estado", topicoComodo);
     mqtt_envia_mensagem(enviaEstado, info);
     cJSON_Delete(json);
