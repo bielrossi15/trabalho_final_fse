@@ -33,9 +33,50 @@ int criaJson (cJSON *espInfo,cJSON *titulo,char nome[],int info){
   return 0;
 }
 
+void mandaMensagem(char *topico, int info)
+{
+  cJSON *json = cJSON_CreateObject();
+  while (json == NULL)
+  {
+    cJSON_Delete(json);
+    ESP_LOGE("JSON", "erro ao criar o objeto json, tentando novamente em 3 segundos\n");
+    vTaskDelay(3000 / portTICK_PERIOD_MS);
+    json = cJSON_CreateObject();
+  }
 
+  cJSON *mensagem = NULL;
+  while (criaJson(json, mensagem, topico, info));
+  char *info2 = cJSON_Print(json);
+  char enviaEstado[200];
+  sprintf(enviaEstado, "%s/%s", topicoComodo,topico);
+  mqtt_envia_mensagem(enviaEstado, info2);
+  cJSON_Delete(json);
+}
 
-void trataComunicacaoComServidor(void * params)
+void mandaMensagemEstado(int botao, int led){
+  cJSON *json = cJSON_CreateObject();
+  while (json == NULL)
+  {
+    cJSON_Delete(json);
+    ESP_LOGE("JSON", "erro ao criar o objeto json, tentando novamente em 3 segundos\n");
+    vTaskDelay(3000 / portTICK_PERIOD_MS);
+    json = cJSON_CreateObject();
+  }
+  
+  cJSON *saida = NULL;
+  while (criaJson(json, saida, "saida", estadoLed));
+
+  cJSON *entrada = NULL;
+  while (criaJson(json, entrada, "entrada", clickBotao));
+  
+  char *info = cJSON_Print(json);
+  char enviaEstado[200];
+  sprintf(enviaEstado,"%s/estado",topicoComodo);
+  mqtt_envia_mensagem(enviaEstado, info);
+  cJSON_Delete(json);
+}
+
+void trataComunicacaoComServidor(void *params)
 {
   char mensagem[50];
   if(xSemaphoreTake(conexaoMQTTSemaphore, portMAX_DELAY))
@@ -54,7 +95,13 @@ void trataComunicacaoComServidor(void * params)
 
       
 
-      cJSON *espInfo = cJSON_CreateObject();
+      mandaMensagem("temperatura",temperature);
+      mandaMensagem("umidade", humidity);
+      mandaMensagemEstado(clickBotao,estadoLed);
+     
+      vTaskDelay(10000 / portTICK_PERIOD_MS);
+
+      /*cJSON *espInfo = cJSON_CreateObject();
       while(espInfo == NULL)
       {
         cJSON_Delete(espInfo);
@@ -64,6 +111,7 @@ void trataComunicacaoComServidor(void * params)
       }
 
       cJSON *temperatura = NULL;
+      
       while(criaJson(espInfo, temperatura, "temperatura", temperature));
 
       cJSON *umidade = NULL;
@@ -80,8 +128,8 @@ void trataComunicacaoComServidor(void * params)
     
       printf("String de info = %s\n",info);
       mqtt_envia_mensagem(topicoComodo, info);
-      vTaskDelay(30000 / portTICK_PERIOD_MS);
-      cJSON_Delete(espInfo);
+      */
+      //cJSON_Delete(espInfo);
     }
   }
 }

@@ -28,22 +28,6 @@ void initializaBotao()
    
 }
 
-void mandaMensagemPush(){
-    cJSON *botaoPush = cJSON_CreateObject();
-    while (botaoPush == NULL)
-    {
-        cJSON_Delete(botaoPush);
-        ESP_LOGE("JSON", "erro ao criar o objeto json, tentando novamente em 3 segundos\n");
-        vTaskDelay(3000 / portTICK_PERIOD_MS);
-        botaoPush = cJSON_CreateObject();
-    }
-    cJSON *entrada = NULL;
-    while (criaJson(botaoPush, entrada, "entrada", clickBotao));
-    char *info = cJSON_Print(botaoPush);
-    printf("String de info = %s\n", info);
-    mqtt_envia_mensagem(topicoComodo, info);
-    cJSON_Delete(botaoPush);
-}
 
 void trataInterrupcaoBotao(void *params)
 {
@@ -66,7 +50,7 @@ void trataInterrupcaoBotao(void *params)
 
                 clickBotao=!clickBotao;
                 printf("%d\n",clickBotao);
-                mandaMensagemPush();
+                mandaMensagem("entrada",clickBotao);
                 // Habilitar novamente a interrupção
                 vTaskDelay(50 / portTICK_PERIOD_MS);
                 gpio_isr_handler_add(pino, gpio_isr_handler, (void *)pino);

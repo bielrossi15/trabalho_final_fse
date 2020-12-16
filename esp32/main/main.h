@@ -23,7 +23,7 @@
 void conectadoWifi(void *params);
 void trataComunicacaoComServidor(void *params);
 int criaJson(cJSON *espInfo, cJSON *titulo, char nome[], int info);
-
-
+void mandaMensagem(char *topico,int info);
+void mandaMensagemEstado(int botao, int led);
 
 #endif
