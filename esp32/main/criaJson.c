@@ -46,10 +46,8 @@ void mandaMensagem(char *topico, int info)
     }
 
     cJSON *mensagem = NULL;
-    while (criaJsonStr(json, mensagem))
-        ;
-    while (criaJson(json, mensagem, topico, info))
-        ;
+    while (criaJsonStr(json, mensagem));
+    while (criaJson(json, mensagem, topico, info));
 
     char *info2 = cJSON_Print(json);
     char enviaEstado[200];
@@ -70,16 +68,13 @@ void mandaMensagemEstado()
     }
 
     cJSON *id = NULL;
-    while (criaJsonStr(json, id))
-        ;
+    while (criaJsonStr(json, id));
 
     cJSON *saida = NULL;
-    while (criaJson(json, saida, "saida", estadoLed))
-        ;
+    while (criaJson(json, saida, "saida", estadoLed));
 
     cJSON *entrada = NULL;
-    while (criaJson(json, entrada, "entrada", clickBotao))
-        ;
+    while (criaJson(json, entrada, "entrada", clickBotao));
 
     char *info = cJSON_Print(json);
     char enviaEstado[200];
