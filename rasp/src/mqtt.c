@@ -32,9 +32,6 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTClient_message *m
     char *ptr = strtok(temp, delim); // fse
     ptr = strtok(NULL, delim); // matricula
     ptr = strtok(NULL, delim); // dispositivo || comodo
-    char teste [100];
-    strcpy(teste,ptr);
-    printError(teste);
     
     if(ptr == NULL){
         //coco
@@ -60,7 +57,7 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTClient_message *m
     } else{
         int result = number_for_key(ptr);
         char test[100];
-        printError(test);
+        
         sprintf(test,"%d",result);
         cJSON * json = cJSON_Parse(message->payload);
         mqtt_device[result].in_state = cJSON_GetObjectItemCaseSensitive(json, "entrada")->valueint;
@@ -107,13 +104,13 @@ void mqtt_publish(char* topic, char* payload)
 {
     MQTTClient_message pubmsg = MQTTClient_message_initializer;
     MQTTClient_deliveryToken token;
-
     pubmsg.payload = payload;
     pubmsg.payloadlen = strlen(pubmsg.payload);
     pubmsg.qos = 1;
     pubmsg.retained = 0;
     MQTTClient_publishMessage(client, topic, &pubmsg, &token);
     MQTTClient_waitForCompletion(client, token, 1000L);
+    
 }
 
 void mqtt_subscribe(char * topic){
@@ -122,20 +119,15 @@ void mqtt_subscribe(char * topic){
 
 int number_for_key(char *key)
 {
-    printError("entrei no number for key");
+    
     int i = 0;
-    printError(mapa[i].str);
+  
     char test1[500];
     sprintf(test1, "%d", mapa[i].n);
-    printError(test1);
+   
     char *name = mapa[i].str;
-    if(name == NULL){
-        printError("NOME TA NULL");
-    }
     while (name) {
         if (strcmp(name, key) == 0){
-            printError(name);
-            printError(key);
             return mapa[i].n;
         }
         name = mapa[++i].str;

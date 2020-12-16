@@ -26,7 +26,8 @@ void printClientConection();
 void setClientConection(char msg[500]);
 
 void enviaNomeComodo();
-void enviaComandoAparelhos(int validation);
+void enviaComandoAparelhos();
+void ligaDesligaLed();
 FILE * fp;
 
 

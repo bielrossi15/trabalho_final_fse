@@ -87,12 +87,16 @@ void * EntradaUsuario(void* parameters){
         {
             if(validation==0){
                 clearThenBox(1);
-                mvwscanw(windowEntradaUsuario, 4, 9, "%d ", &validation);
-                enviaComandoAparelhos(validation);
+                enviaComandoAparelhos();
             }
             else if(validation==1){
-
-            }
+                clearThenBox(1);
+                ligaDesligaLed();
+            } 
+            else 
+            {
+                tocaAlarme = 1;
+            } 
         }
         mvwprintw(windowEntradaUsuario, 1, 1, "Escolha um comando de 0 para controlar as lampadas, 1 para controlar as esps e 2 para alarme");
         mvwprintw(windowEntradaUsuario, 4, 1, "Comando:");
@@ -101,10 +105,31 @@ void * EntradaUsuario(void* parameters){
 
     return NULL;
 }
-void enviaComandoAparelhos(int validation)
-{
+
+void ligaDesligaLed(){
+    int validation;
+    mvwprintw(windowEntradaUsuario, 1, 1, "Escolha o número do cômodo%*c",65,' ');
+    mvwscanw(windowEntradaUsuario, 4, 9, "%d ", &validation);
     clearThenBox(1);
+    validation--;
     
+    char topic[512];
+    char data[512];
+
+    sprintf(topic, "fse2020/170013278/dispositivos/%s", mqtt_device[validation].id); 
+    mqtt_device[validation].out_state=!mqtt_device[validation].out_state;
+    sprintf(data, "{ \"saida\": %d}",mqtt_device[validation].out_state);
+    mqtt_publish(topic, data);
+   
+}
+
+void enviaComandoAparelhos()
+{   
+    int validation;
+    mvwprintw(windowEntradaUsuario, 1, 1, "Escolha a lâmpada%*c",74,' ');
+    mvwscanw(windowEntradaUsuario, 4, 9, "%d ", &validation);
+    clearThenBox(1);
+
         while(validation<0|| validation> 2)
         {
             mvwprintw(windowEntradaUsuario, 1, 1, "Comando Incorreto. Escolha um comando de 0 ou 1 para as lampadas ou 2 para alarme");
@@ -119,10 +144,7 @@ void enviaComandoAparelhos(int validation)
             gpioLigaEquipamentos(validation);
         }
 
-        else 
-        {
-            tocaAlarme = 1;
-        }
+       
             
        
 }
@@ -137,7 +159,7 @@ void enviaNomeComodo()
 
     sprintf(topic, "%s%s", "fse2020/170013278/dispositivos/", mqtt_device[count_dispositivos].id);
     wrefresh(windowEntradaUsuario);
-    mvwprintw(windowEntradaUsuario, 1, 1, "Escolha um nome para o novo comodo%*c", 30, ' ');
+    mvwprintw(windowEntradaUsuario, 1, 1, "Escolha um nome para o novo comodo%*c", 60, ' ');
     mvwprintw(windowEntradaUsuario, 4, 1, "Comodo: ");
     mvwscanw(windowEntradaUsuario, 4, 9, "%s", &mqtt_device[count_dispositivos].room);
 
@@ -149,9 +171,6 @@ void enviaNomeComodo()
     mapa[count_dispositivos].str = mqtt_device[count_dispositivos].room;
     mapa[count_dispositivos].n = count_dispositivos;
     mqtt_subscribe(inscreveComodo);
-    mvwprintw(windowEntradaUsuario, 1, 1, "Escolha um comando de 0 ou 1 para as lampadas ou 2 para alarme");
-    mvwprintw(windowEntradaUsuario, 4, 1, "Comando:");
-    mvwprintw(windowImprimeDados, 7 + 3, xMax/10+50, "%*c", 30, ' ');
 
 
     cadastrar_dispositivo = 0;
@@ -189,7 +208,7 @@ void * ImprimeDados(){
         {
             for(int j = 4,i=0; i < count_dispositivos; j++,i++)
             {
-                mvwprintw(windowImprimeDados, (j - 4) + 6, xMax/(xMax - 5), "%s -> T %d H %d IN %d OUT %d\n\n", mqtt_device[i].room, mqtt_device[i].temp, mqtt_device[i].hmd, mqtt_device[i].in_state, mqtt_device[i].out_state);
+                mvwprintw(windowImprimeDados, (j - 4) + 6, xMax/(xMax - 5), "%d. %s -> T %d H %d IN %d OUT %d\n\n",i+1, mqtt_device[i].room, mqtt_device[i].temp, mqtt_device[i].hmd, mqtt_device[i].in_state, mqtt_device[i].out_state);
                 // mvwprintw(windowImprimeDados, j+3, xMax/(xMax - 5), "%s", mqtt_device[j - 4].room);
             }
         }
