@@ -25,5 +25,6 @@ void trataComunicacaoComServidor(void *params);
 int criaJson(cJSON *espInfo, cJSON *titulo, char nome[], int info);
 void mandaMensagem(char *topico,int info);
 void mandaMensagemEstado();
+int criaJsonStr(cJSON *espInfo, cJSON *titulo);
 
 #endif

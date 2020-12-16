@@ -6,7 +6,7 @@ xSemaphoreHandle conexaoMQTTSemaphore;
 extern char topicoComodo[100];
 extern int estadoLed;
 extern int clickBotao;
-//extern char *macAddress;
+extern char *macAddress;
 
 void conectadoWifi(void *params)
 {
@@ -34,6 +34,19 @@ int criaJson (cJSON *espInfo,cJSON *titulo,char nome[],int info){
   return 0;
 }
 
+int criaJsonStr(cJSON *espInfo, cJSON *titulo)
+{
+  titulo = cJSON_CreateString(macAddress);
+  if (titulo == NULL)
+  {
+    ESP_LOGE("JSON", "erro ao criar o json, tentando novamente em 3 segundos\n");
+    vTaskDelay(3000 / portTICK_PERIOD_MS);
+    return 1;
+  }
+  cJSON_AddItemToObject(espInfo, "id", titulo);
+  return 0;
+}
+
 void mandaMensagem(char *topico, int info)
 {
   cJSON *json = cJSON_CreateObject();
@@ -46,7 +59,9 @@ void mandaMensagem(char *topico, int info)
   }
 
   cJSON *mensagem = NULL;
+  while (criaJsonStr(json, mensagem));
   while (criaJson(json, mensagem, topico, info));
+  
   char *info2 = cJSON_Print(json);
   char enviaEstado[200];
   sprintf(enviaEstado, "%s/%s", topicoComodo,topico);
@@ -63,6 +78,9 @@ void mandaMensagemEstado(){
     vTaskDelay(3000 / portTICK_PERIOD_MS);
     json = cJSON_CreateObject();
   }
+
+  cJSON *id = NULL;
+  while (criaJsonStr(json, id));
   
   cJSON *saida = NULL;
   while (criaJson(json, saida, "saida", estadoLed));
@@ -101,36 +119,6 @@ void trataComunicacaoComServidor(void *params)
       mandaMensagemEstado();
      
       vTaskDelay(10000 / portTICK_PERIOD_MS);
-
-      /*cJSON *espInfo = cJSON_CreateObject();
-      while(espInfo == NULL)
-      {
-        cJSON_Delete(espInfo);
-        ESP_LOGE("JSON", "erro ao criar o objeto json, tentando novamente em 3 segundos\n");
-        vTaskDelay(3000 / portTICK_PERIOD_MS);
-        espInfo = cJSON_CreateObject();
-      }
-
-      cJSON *temperatura = NULL;
-      
-      while(criaJson(espInfo, temperatura, "temperatura", temperature));
-
-      cJSON *umidade = NULL;
-      while (criaJson(espInfo, umidade, "umidade", humidity));
-
-     
-      cJSON *saida = NULL;
-      while (criaJson(espInfo, saida, "saida", estadoLed));
-
-      cJSON *entrada = NULL;
-      while (criaJson(espInfo, entrada, "entrada", clickBotao));
-
-      char *info = cJSON_Print(espInfo);
-    
-      printf("String de info = %s\n",info);
-      mqtt_envia_mensagem(topicoComodo, info);
-      */
-      //cJSON_Delete(espInfo);
     }
   }
 }
