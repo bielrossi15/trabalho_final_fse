@@ -1,5 +1,5 @@
-#ifndef MAIN_H
-#define MAIN_H
+#ifndef CRIA_JSON_H
+#define CRIA_JSON_H
 
 #include <stdio.h>
 #include <string.h>
@@ -14,14 +14,14 @@
 #include "driver/gpio.h"
 #include "sdkconfig.h"
 
-
 #include "mqtt.h"
 #include "dht11.h"
 #include "led.h"
 #include "botao.h"
-#include "criaJson.h"
 
-void conectadoWifi(void *params);
-void trataComunicacaoComServidor(void *params);
+int criaJson(cJSON *espInfo, cJSON *titulo, char nome[], int info);
+void mandaMensagem(char *topico, int info);
+void mandaMensagemEstado();
+int criaJsonStr(cJSON *espInfo, cJSON *titulo);
 
 #endif
