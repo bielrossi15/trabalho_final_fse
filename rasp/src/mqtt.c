@@ -38,10 +38,11 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTClient_message *m
        
         ptr = strtok(NULL, delim); // mac
 
-        if(dispositivos_para_registrar == 5){
+        if(count_dispositivos == 5){
             printError("Número máximo de esps atingindo");
-            return 1;
+            return 1;   
         }
+        
         cJSON * json = cJSON_Parse(message->payload);
         cJSON * id = cJSON_GetObjectItem(json, "id");
         
@@ -50,7 +51,6 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTClient_message *m
         if(id)
         {
             strcpy(mqtt_device[count_dispositivos].id, ptr);
-            dispositivos_para_registrar++;
             cadastrar_dispositivo = 1;
             screen_controler = 1;
         }
@@ -64,14 +64,34 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTClient_message *m
 
         ptr = strtok(NULL, delim);
         if(!strcmp(ptr, "temperatura")){
-            mqtt_device[result].temp = cJSON_GetObjectItemCaseSensitive(json, "temperatura")->valueint;
+            if(cJSON_GetObjectItemCaseSensitive(json, "temperatura")!=NULL){
+                mqtt_device[result].temp = cJSON_GetObjectItemCaseSensitive(json, "temperatura")->valueint;
+            }
+            else{
+                printError("Envio incorreto");
+            }
+                
         }
         else if(!strcmp(ptr, "umidade")){
-            mqtt_device[result].hmd = cJSON_GetObjectItemCaseSensitive(json, "umidade")->valueint;
+            if(cJSON_GetObjectItemCaseSensitive(json, "umidade")!=NULL){
+                mqtt_device[result].hmd = cJSON_GetObjectItemCaseSensitive(json, "umidade")->valueint;
+            }
+            else{
+                printError("Envio Incorreto");
+            }
+
         }
         else if(!strcmp(ptr, "estado")){
-            mqtt_device[result].in_state = cJSON_GetObjectItemCaseSensitive(json, "entrada")->valueint;
-            mqtt_device[result].out_state = cJSON_GetObjectItemCaseSensitive(json, "saida")->valueint;
+            if(cJSON_GetObjectItemCaseSensitive(json, "entrada")!=NULL){
+                mqtt_device[result].in_state = cJSON_GetObjectItemCaseSensitive(json, "entrada")->valueint;
+            } else {
+                printError("Envio Incorreto");
+            }
+            if(cJSON_GetObjectItemCaseSensitive(json, "saida")!=NULL){
+                mqtt_device[result].out_state = cJSON_GetObjectItemCaseSensitive(json, "saida")->valueint;
+            } else {
+                printError("Envio Incorreto");
+            }
         }
         
     }

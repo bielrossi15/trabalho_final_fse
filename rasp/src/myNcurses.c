@@ -150,20 +150,20 @@ void enviaComandoAparelhos()
     mvwscanw(windowEntradaUsuario, 4, 9, "%d ", &validation);
     clearThenBox(1);
 
-        while(validation<0|| validation> 2)
+        while(validation<1|| validation> 2)
         {
-            mvwprintw(windowEntradaUsuario, 1, 1, "Comando Incorreto. Escolha um comando de 0 ou 1 para as lampadas ou 2 para alarme");
+            mvwprintw(windowEntradaUsuario, 1, 1, "Comando Incorreto. Escolha um comando de 1 ou 2 para as lampadas");
             clearThenBox(0);
             
             mvwscanw(windowEntradaUsuario, 4, 9, "%d",&validation);
             clearThenBox(1);
         }
         
-        if(validation < 2)
-        {
+     
             fprintf(fp,"Alterou o estado da lampada %d, %s", validation, asctime(tm));
-            gpioLigaEquipamentos(validation);
-        }   
+            validation--;
+            gpioLigaEquipamentos(validation);   
+
 }
 void enviaNomeComodo()
 {
@@ -236,7 +236,7 @@ void * ImprimeDados(){
 
         if(screen_controler == 1 && cadastrar_dispositivo == 1)
         {
-            mvwprintw(windowImprimeDados, 7 + 3, xMax/10+40, "Aperte ENTER para cadastrar quarto");
+            mvwprintw(windowImprimeDados, 7 + 3, xMax/10+39, "Aperte ENTER para cadastrar comodo");
         }
         box(windowImprimeDados, 0, 0);
         wrefresh(windowImprimeDados);
