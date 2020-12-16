@@ -19,11 +19,11 @@ volatile int restartClient;
 int sensorsSize = 8,machinesSize=6;
 
 extern struct atualizacao updateValues;
-extern int tocaAlarme;
+int tocaAlarme=0;
 
 int gpioLigaEquipamentos(int option)
 {
-    bcm2835_gpio_write(sensors[0].port, 1);
+    
     bcm2835_gpio_write(machines[option].port, !machines[option].state);
     machines[option].state = !machines[option].state;
 
@@ -46,8 +46,8 @@ void gpioSensoresPresenca(){
     }
 
     if(cont > 0 && tocaAlarme == 1){
+        //printError("Alarme tocando");
         system("omxplayer --no-keys example.mp3 > /dev/null 2>&1 & ");
-        // printf("tocou\n");
     }
 }
 
