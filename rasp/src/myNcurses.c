@@ -169,7 +169,6 @@ void enviaNomeComodo()
     char inscreveComodo[512];
     sprintf(inscreveComodo,"fse2020/170013278/%s/#",mqtt_device[count_dispositivos].room);
     mapa[count_dispositivos].str = mqtt_device[count_dispositivos].room;
-    mapa[count_dispositivos].n = count_dispositivos;
     mqtt_subscribe(inscreveComodo);
 
 
