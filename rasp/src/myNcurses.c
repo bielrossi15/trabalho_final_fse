@@ -14,7 +14,7 @@ extern int cadastrar_dispositivo;
 void initNcurs()
 {
     fp=fopen("relatorio.csv","w");
-    fprintf(fp,"Comando, Alarme Ativado, Horário\n");
+    fprintf(fp,"Comando, Horário\n");
     fclose(fp);
     fp=fopen("relatorio.csv","a");
     
@@ -71,9 +71,13 @@ void createErrosWindow(){
 
 void * EntradaUsuario(void* parameters){
 
+    time_t t = time(NULL);
+    struct tm *tm = localtime(&t);
+
     mvwprintw(windowEntradaUsuario, 1, 1, "Escolha um comando de 0 para controlar as lampadas, 1 para controlar as esps e 2 para alarme");
     mvwprintw(windowEntradaUsuario, 4, 1, "Comando:");
     clearThenBox(0);
+    
     
     int validation;
     while(mvwscanw(windowEntradaUsuario, 4, 9, "%d ", &validation)){
@@ -96,6 +100,7 @@ void * EntradaUsuario(void* parameters){
             else 
             {
                 tocaAlarme = 1;
+                fprintf(fp,"Alterou a permissao do alarme, %s", asctime(tm));
             } 
         }
         mvwprintw(windowEntradaUsuario, 1, 1, "Escolha um comando de 0 para controlar as lampadas, 1 para controlar as esps e 2 para alarme");
@@ -108,24 +113,39 @@ void * EntradaUsuario(void* parameters){
 
 void ligaDesligaLed(){
     int validation;
+    time_t t = time(NULL);
+    struct tm *tm = localtime(&t);
     mvwprintw(windowEntradaUsuario, 1, 1, "Escolha o número do cômodo%*c",65,' ');
     mvwscanw(windowEntradaUsuario, 4, 9, "%d ", &validation);
-    clearThenBox(1);
-    validation--;
-    
-    char topic[512];
-    char data[512];
 
-    sprintf(topic, "fse2020/170013278/dispositivos/%s", mqtt_device[validation].id); 
-    mqtt_device[validation].out_state=!mqtt_device[validation].out_state;
-    sprintf(data, "{ \"saida\": %d}",mqtt_device[validation].out_state);
-    mqtt_publish(topic, data);
+    if(validation > count_dispositivos)
+    {
+        printError("Comodo nao existe");
+    }
+
+    else
+    {
+        clearThenBox(1);
+        validation--;
+
+        fprintf(fp,"Alterou o estado do led do comodo %d, %s", validation, asctime(tm));
+        
+        char topic[512];
+        char data[512];
+
+        sprintf(topic, "fse2020/170013278/dispositivos/%s", mqtt_device[validation].id); 
+        mqtt_device[validation].out_state=!mqtt_device[validation].out_state;
+        sprintf(data, "{ \"saida\": %d}",mqtt_device[validation].out_state);
+        mqtt_publish(topic, data);
+    }
    
 }
 
 void enviaComandoAparelhos()
 {   
     int validation;
+    time_t t = time(NULL);
+    struct tm *tm = localtime(&t);
     mvwprintw(windowEntradaUsuario, 1, 1, "Escolha a lâmpada%*c",74,' ');
     mvwscanw(windowEntradaUsuario, 4, 9, "%d ", &validation);
     clearThenBox(1);
@@ -141,12 +161,9 @@ void enviaComandoAparelhos()
         
         if(validation < 2)
         {
+            fprintf(fp,"Alterou o estado da lampada %d, %s", validation, asctime(tm));
             gpioLigaEquipamentos(validation);
-        }
-
-       
-            
-       
+        }   
 }
 void enviaNomeComodo()
 {
@@ -154,6 +171,8 @@ void enviaNomeComodo()
     getmaxyx(stdscr, yMax, xMax);
     char topic[512];
     char data[512];
+    time_t t = time(NULL);
+    struct tm *tm = localtime(&t);
 
     clearThenBox(1);
 
@@ -163,13 +182,14 @@ void enviaNomeComodo()
     mvwprintw(windowEntradaUsuario, 4, 1, "Comodo: ");
     mvwscanw(windowEntradaUsuario, 4, 9, "%s", &mqtt_device[count_dispositivos].room);
 
+    fprintf(fp,"Cadastrou o comodo %s, %s", mqtt_device[count_dispositivos].room, asctime(tm));
+
     sprintf(data, "{ \"comodo\": \"%s\"}", mqtt_device[count_dispositivos].room);
     mqtt_publish(topic, data);
     clearThenBox(1);
     char inscreveComodo[512];
     sprintf(inscreveComodo,"fse2020/170013278/%s/#",mqtt_device[count_dispositivos].room);
     mapa[count_dispositivos].str = mqtt_device[count_dispositivos].room;
-    mapa[count_dispositivos].n = count_dispositivos;
     mqtt_subscribe(inscreveComodo);
 
 
@@ -190,8 +210,6 @@ void * ImprimeDados(){
     getmaxyx(stdscr, yMax, xMax);
 
     while(1){
-        time_t t = time(NULL);
-        struct tm *tm = localtime(&t);
         
         wclear(windowImprimeDados);
         mvwprintw(windowImprimeDados, 1, 1, "Temperatura = %f     Umidade = %f     ",updateValues.temperatura,updateValues.umidade);
@@ -199,9 +217,9 @@ void * ImprimeDados(){
         for(int j=0;j<2;j++){
            
             mvwprintw(windowImprimeDados, j+3, xMax/10, "Estado Lâmpada %d = %d %*c %s = %d", j+1 , updateValues.machines[j].state,16,' ',sensorsName[j], updateValues.sensors[j].state);
-            if(updateValues.sensors[j].state){
-                fprintf(fp,"nenhum, %s , %s", sensorsName[j], asctime(tm));
-            }
+            // if(updateValues.sensors[j].state){
+            //     fprintf(fp,"nenhum, %s , %s", sensorsName[j], asctime(tm));
+            // }
         }
 
         if(count_dispositivos > 0)
@@ -216,9 +234,9 @@ void * ImprimeDados(){
         for(int j=2;j<6;j++){
           
             mvwprintw(windowImprimeDados, j + 3, xMax/10+39, "%s = % d ", sensorsName[j], updateValues.sensors[j].state);
-            if(updateValues.sensors[j].state){
-                fprintf(fp,"nenhum, %s , %s", sensorsName[j], asctime(tm));
-            }
+            // if(updateValues.sensors[j].state){
+            //     fprintf(fp,"nenhum, %s , %s", sensorsName[j], asctime(tm));
+            // }
         }
 
         if(screen_controler == 1 && cadastrar_dispositivo == 1)
@@ -260,7 +278,7 @@ void clearThenBox(int option){
 
 void printError(char erro[500]){
 
-    wprintw(windowImprimeErros, "ERRO -> %s\n ",erro);
+    wprintw(windowImprimeErros, " %s\n ",erro);
 	box(windowImprimeErros, 0, 0);
 	wrefresh(windowImprimeErros);
 
