@@ -6,8 +6,7 @@
 extern xSemaphoreHandle conexaoMQTTSemaphore;
 esp_mqtt_client_handle_t client;
 char *macAddress;
-char topicoComodo[100];
-int estado = 0;
+char topicoComodo[300];
 
 void  getMacAddress(){
 
@@ -22,7 +21,6 @@ void  getMacAddress(){
         macAddress+=2;
     }
     macAddress-=12;
-    //free(mac);
 
 }
    
@@ -45,13 +43,13 @@ void conexaoEsp(){
 
     mqtt_envia_mensagem(topicoMqttConnected, info);
     mqtt_inscricao(topicoMqttConnected);
-    //free(macAddress);
+    
 }
 
 void pega_Comodo_MQTT_DATA(char buffer[]){
     
    
-    //printf("%s\n", buffer);
+    
     cJSON *jsonComodo = cJSON_Parse(buffer);
     const cJSON *atributte = NULL;
     atributte = cJSON_GetObjectItemCaseSensitive(jsonComodo, "comodo");
@@ -68,8 +66,7 @@ void pega_Comodo_MQTT_DATA(char buffer[]){
         atributte = cJSON_GetObjectItemCaseSensitive(jsonComodo, "saida");
         if (cJSON_IsNumber(atributte) && (atributte->valueint == 0 || atributte->valueint == 1))
         {
-            printf("%d\n",atributte->valueint);
-            estado = ligaDesligaLed(atributte->valueint);
+            ligaDesligaLed(atributte->valueint);
         }
     }
     
@@ -146,7 +143,7 @@ void mqtt_start()
 void mqtt_envia_mensagem(char * topico, char * mensagem)
 {
     int message_id = esp_mqtt_client_publish(client, topico, mensagem, 0, 1, 0);
-    ESP_LOGI(TAG, "Mesnagem enviada, ID: %d", message_id);
+    ESP_LOGI(TAG, "Mensagem enviada, ID: %d", message_id);
 }
 
 void mqtt_inscricao(char *topico)

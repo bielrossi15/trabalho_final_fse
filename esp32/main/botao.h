@@ -1,5 +1,5 @@
-#ifndef botao_H_
-#define botao_H_
+#ifndef BOTAO_H_
+#define BOTAO_H_
 
 #include <stdio.h>
 #include <string.h>
@@ -13,7 +13,6 @@
 #define BOTAO 0
 
 void initializaBotao();
-void trataBotao(void *params);
 void trataInterrupcaoBotao(void *params);
 
 
