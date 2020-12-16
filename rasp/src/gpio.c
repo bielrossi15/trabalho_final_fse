@@ -46,7 +46,7 @@ void gpioSensoresPresenca(){
     }
 
     if(cont > 0 && tocaAlarme == 1){
-        system("omxplayer --no-keys example.mp3 > /dev/null 2>&1 & ");
+        //system("omxplayer --no-keys example.mp3 > /dev/null 2>&1 & ");
         // printf("tocou\n");
     }
 }

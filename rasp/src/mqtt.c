@@ -32,12 +32,15 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTClient_message *m
     char *ptr = strtok(temp, delim); // fse
     ptr = strtok(NULL, delim); // matricula
     ptr = strtok(NULL, delim); // dispositivo || comodo
-
-
+    char teste [100];
+    strcpy(teste,ptr);
+    printError(teste);
+    
     if(ptr == NULL){
         //coco
         printf("error\n");
     }else if(!strcmp(ptr, "dispositivos")){
+       
         ptr = strtok(NULL, delim); // mac
 
         //if(dispositivos_para_registrar == 5) return 1;
@@ -54,7 +57,21 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTClient_message *m
             screen_controler = 1;
         }
         
+    } else{
+        int result = number_for_key(ptr);
+        char test[100];
+        printError(test);
+        sprintf(test,"%d",result);
+        cJSON * json = cJSON_Parse(message->payload);
+        mqtt_device[result].in_state = cJSON_GetObjectItemCaseSensitive(json, "entrada")->valueint;
+        if(cJSON_GetObjectItemCaseSensitive(json, "saida")!=NULL){
+            mqtt_device[result].out_state = cJSON_GetObjectItemCaseSensitive(json, "saida")->valueint;
+            mqtt_device[result].temp = cJSON_GetObjectItemCaseSensitive(json, "temperatura")->valueint;
+             mqtt_device[result].hmd = cJSON_GetObjectItemCaseSensitive(json, "umidade")->valueint;
+        }
+        
     }
+    
     
     MQTTClient_freeMessage(&message);
     MQTTClient_free(topicName);
@@ -62,7 +79,7 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTClient_message *m
     return 1;
 }
 
-int mqtt_configuration()
+void mqtt_configuration()
 {
     MQTTClient_connectOptions conn_opts = MQTTClient_connectOptions_initializer;
     int rc;
@@ -86,7 +103,7 @@ int mqtt_configuration()
     MQTTClient_subscribe(client, "fse2020/170013278/dispositivos/#", 1);
 }
 
-void mqtt_publish(MQTTClient client, char* topic, char* payload)
+void mqtt_publish(char* topic, char* payload)
 {
     MQTTClient_message pubmsg = MQTTClient_message_initializer;
     MQTTClient_deliveryToken token;
@@ -97,4 +114,31 @@ void mqtt_publish(MQTTClient client, char* topic, char* payload)
     pubmsg.retained = 0;
     MQTTClient_publishMessage(client, topic, &pubmsg, &token);
     MQTTClient_waitForCompletion(client, token, 1000L);
+}
+
+void mqtt_subscribe(char * topic){
+     MQTTClient_subscribe(client, topic, 1);
+}
+
+int number_for_key(char *key)
+{
+    printError("entrei no number for key");
+    int i = 0;
+    printError(mapa[i].str);
+    char test1[500];
+    sprintf(test1, "%d", mapa[i].n);
+    printError(test1);
+    char *name = mapa[i].str;
+    if(name == NULL){
+        printError("NOME TA NULL");
+    }
+    while (name) {
+        if (strcmp(name, key) == 0){
+            printError(name);
+            printError(key);
+            return mapa[i].n;
+        }
+        name = mapa[++i].str;
+    }
+    return 0;
 }

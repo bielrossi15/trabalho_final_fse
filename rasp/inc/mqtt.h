@@ -2,21 +2,27 @@
 
 #ifndef MQTT_H
 #define MQTT_H
-
+#include "myNcurses.h"
 struct mqtt_client 
 {
     char id[50];
     char room[50];
     char in[50];
     char out[50];
-    char in_state;
-    char out_state;
-    double temp;
-    double hmd;
+    int in_state;
+    int out_state;
+    int temp;
+    int hmd;
 };
 
-int mqtt_configuration();
-void mqtt_subscribe();
-void mqtt_publish(MQTTClient client, char* topic, char* payload);
+struct entry {
+    char *str;
+    int n;
+};
+struct entry mapa[6];
 
+int number_for_key(char *key);
+void mqtt_configuration();
+void mqtt_publish(char* topic, char* payload);
+void mqtt_subscribe(char * topic);
 #endif

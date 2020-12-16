@@ -9,6 +9,7 @@
 #include <pthread.h>
 #include <string.h>
 #include "gpio.h"
+#include "mqtt.h"
 
 void initNcurs();
 
