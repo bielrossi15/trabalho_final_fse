@@ -17,9 +17,9 @@ struct mqtt_client
 
 struct entry {
     char *str;
-    int n;
+    char macAdress[6][20];
 };
-struct entry mapa[6];
+struct entry mapa[10];
 
 int number_for_key(char *key);
 void mqtt_configuration();

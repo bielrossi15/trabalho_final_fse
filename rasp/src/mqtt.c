@@ -66,9 +66,6 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTClient_message *m
         else if(!strcmp(ptr, "umidade")){
             mqtt_device[result].hmd = cJSON_GetObjectItemCaseSensitive(json, "umidade")->valueint;
         }
-        else if(!strcmp(ptr, "entrada")){
-            mqtt_device[result].in_state = cJSON_GetObjectItemCaseSensitive(json, "entrada")->valueint;
-        }
         else if(!strcmp(ptr, "estado")){
             mqtt_device[result].in_state = cJSON_GetObjectItemCaseSensitive(json, "entrada")->valueint;
             mqtt_device[result].out_state = cJSON_GetObjectItemCaseSensitive(json, "saida")->valueint;
@@ -129,14 +126,10 @@ int number_for_key(char *key)
 {
     
     int i = 0;
-  
-    char test1[500];
-    sprintf(test1, "%d", mapa[i].n);
-   
     char *name = mapa[i].str;
     while (name) {
         if (strcmp(name, key) == 0){
-            return mapa[i].n;
+            return i;
         }
         name = mapa[++i].str;
     }
