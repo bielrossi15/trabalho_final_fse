@@ -6,6 +6,7 @@ xSemaphoreHandle conexaoMQTTSemaphore;
 extern char topicoComodo[100];
 extern int estadoLed;
 extern int clickBotao;
+//extern char *macAddress;
 
 void conectadoWifi(void *params)
 {
@@ -53,7 +54,7 @@ void mandaMensagem(char *topico, int info)
   cJSON_Delete(json);
 }
 
-void mandaMensagemEstado(int botao, int led){
+void mandaMensagemEstado(){
   cJSON *json = cJSON_CreateObject();
   while (json == NULL)
   {
@@ -97,7 +98,7 @@ void trataComunicacaoComServidor(void *params)
 
       mandaMensagem("temperatura",temperature);
       mandaMensagem("umidade", humidity);
-      mandaMensagemEstado(clickBotao,estadoLed);
+      mandaMensagemEstado();
      
       vTaskDelay(10000 / portTICK_PERIOD_MS);
 

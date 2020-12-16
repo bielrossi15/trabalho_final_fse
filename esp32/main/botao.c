@@ -50,7 +50,7 @@ void trataInterrupcaoBotao(void *params)
 
                 clickBotao=!clickBotao;
                 printf("%d\n",clickBotao);
-                mandaMensagem("entrada",clickBotao);
+                mandaMensagemEstado();
                 // Habilitar novamente a interrupção
                 vTaskDelay(50 / portTICK_PERIOD_MS);
                 gpio_isr_handler_add(pino, gpio_isr_handler, (void *)pino);
