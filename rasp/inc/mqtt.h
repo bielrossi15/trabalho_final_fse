@@ -17,11 +17,10 @@ struct mqtt_client
 
 struct entry {
     char *str;
-    char macAdress[6][20];
 };
 struct entry mapa[10];
 
-int number_for_key(char *key);
+int findByid(char *id);
 void mqtt_configuration();
 void mqtt_publish(char* topic, char* payload);
 void mqtt_subscribe(char * topic);

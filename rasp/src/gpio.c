@@ -23,7 +23,7 @@ extern int tocaAlarme;
 
 int gpioLigaEquipamentos(int option)
 {
-    bcm2835_gpio_write(sensors[0].port, 1);
+    
     bcm2835_gpio_write(machines[option].port, !machines[option].state);
     machines[option].state = !machines[option].state;
 

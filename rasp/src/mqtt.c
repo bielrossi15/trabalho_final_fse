@@ -33,13 +33,15 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTClient_message *m
     ptr = strtok(NULL, delim); // matricula
     ptr = strtok(NULL, delim); // dispositivo || comodo
     if(ptr == NULL){
-        //coco
-        printf("error\n");
+        printError("Null pointer");
     }else if(!strcmp(ptr, "dispositivos")){
        
         ptr = strtok(NULL, delim); // mac
 
-        //if(dispositivos_para_registrar == 5) return 1;
+        if(dispositivos_para_registrar == 5){
+            printError("Número máximo de esps atingindo");
+            return 1;
+        }
         cJSON * json = cJSON_Parse(message->payload);
         cJSON * id = cJSON_GetObjectItem(json, "id");
         
@@ -54,11 +56,12 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTClient_message *m
         }
         
     } else{
-        int result = number_for_key(ptr);
-        char test[100];
-        sprintf(test,"%d",result);
 
         cJSON * json = cJSON_Parse(message->payload);
+        char *id = cJSON_GetObjectItemCaseSensitive(json, "id")->valuestring;
+        
+        int result = findByid(id);
+
         ptr = strtok(NULL, delim);
         if(!strcmp(ptr, "temperatura")){
             mqtt_device[result].temp = cJSON_GetObjectItemCaseSensitive(json, "temperatura")->valueint;
@@ -118,20 +121,18 @@ void mqtt_publish(char* topic, char* payload)
 }
 
 void mqtt_subscribe(char * topic){
-    printError(topic);
     MQTTClient_subscribe(client, topic, 1);
 }
 
-int number_for_key(char *key)
+int findByid(char *id)
 {
-    
-    int i = 0;
-    char *name = mapa[i].str;
-    while (name) {
-        if (strcmp(name, key) == 0){
-            return i;
-        }
-        name = mapa[++i].str;
+    int result;
+    for(int i=0;i<count_dispositivos;i++){
+            if(!strcmp(mqtt_device[i].id,id)){
+                result = i;
+                return result;
+                
+            }
     }
-    return 0;
+    return -1;
 }
