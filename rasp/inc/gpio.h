@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <signal.h>
 #include <stdlib.h>
+#include "myNcurses.h"
 
 #define LAMPADA_01 RPI_V2_GPIO_P1_11
 #define LAMPADA_02 RPI_V2_GPIO_P1_12

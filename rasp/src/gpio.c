@@ -19,7 +19,7 @@ volatile int restartClient;
 int sensorsSize = 8,machinesSize=6;
 
 extern struct atualizacao updateValues;
-extern int tocaAlarme;
+int tocaAlarme=0;
 
 int gpioLigaEquipamentos(int option)
 {
@@ -46,8 +46,8 @@ void gpioSensoresPresenca(){
     }
 
     if(cont > 0 && tocaAlarme == 1){
+        //printError("Alarme tocando");
         system("omxplayer --no-keys example.mp3 > /dev/null 2>&1 & ");
-        // printf("tocou\n");
     }
 }
 

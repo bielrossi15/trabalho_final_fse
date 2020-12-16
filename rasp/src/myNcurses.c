@@ -5,7 +5,7 @@ WINDOW *windowImprimeDados,*windowEntradaUsuario,*windowImprimeErros;
 char * connection;
 
 extern struct atualizacao updateValues;
-int tocaAlarme = 0;
+extern int tocaAlarme;
 extern struct mqtt_client mqtt_device[5];
 int screen_controler= 0;
 extern int count_dispositivos;
@@ -99,7 +99,7 @@ void * EntradaUsuario(void* parameters){
             } 
             else 
             {
-                tocaAlarme = 1;
+                tocaAlarme = !tocaAlarme;
                 fprintf(fp,"Alterou a permissao do alarme, %s", asctime(tm));
             } 
         }
@@ -217,9 +217,6 @@ void * ImprimeDados(){
         for(int j=0;j<2;j++){
            
             mvwprintw(windowImprimeDados, j+3, xMax/10, "Estado Lâmpada %d = %d %*c %s = %d", j+1 , updateValues.machines[j].state,16,' ',sensorsName[j], updateValues.sensors[j].state);
-            // if(updateValues.sensors[j].state){
-            //     fprintf(fp,"nenhum, %s , %s", sensorsName[j], asctime(tm));
-            // }
         }
 
         if(count_dispositivos > 0)
@@ -227,22 +224,19 @@ void * ImprimeDados(){
             for(int j = 4,i=0; i < count_dispositivos; j++,i++)
             {
                 mvwprintw(windowImprimeDados, (j - 4) + 6, xMax/(xMax - 5), "%d. %s -> T %d H %d IN %d OUT %d\n\n",i+1, mqtt_device[i].room, mqtt_device[i].temp, mqtt_device[i].hmd, mqtt_device[i].in_state, mqtt_device[i].out_state);
-                // mvwprintw(windowImprimeDados, j+3, xMax/(xMax - 5), "%s", mqtt_device[j - 4].room);
             }
         }
 
         for(int j=2;j<6;j++){
           
             mvwprintw(windowImprimeDados, j + 3, xMax/10+39, "%s = % d ", sensorsName[j], updateValues.sensors[j].state);
-            // if(updateValues.sensors[j].state){
-            //     fprintf(fp,"nenhum, %s , %s", sensorsName[j], asctime(tm));
-            // }
         }
+        
+        mvwprintw(windowImprimeDados, 9, xMax/10+39, "Estado Alarme = %d ", tocaAlarme);
 
         if(screen_controler == 1 && cadastrar_dispositivo == 1)
         {
             mvwprintw(windowImprimeDados, 7 + 3, xMax/10+40, "Aperte ENTER para cadastrar quarto");
-            //screen_controler = 0;
         }
         box(windowImprimeDados, 0, 0);
         wrefresh(windowImprimeDados);
