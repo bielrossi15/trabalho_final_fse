@@ -32,7 +32,6 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTClient_message *m
     char *ptr = strtok(temp, delim); // fse
     ptr = strtok(NULL, delim); // matricula
     ptr = strtok(NULL, delim); // dispositivo || comodo
-    
     if(ptr == NULL){
         //coco
         printf("error\n");
@@ -57,14 +56,22 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTClient_message *m
     } else{
         int result = number_for_key(ptr);
         char test[100];
-        
         sprintf(test,"%d",result);
+
         cJSON * json = cJSON_Parse(message->payload);
-        mqtt_device[result].in_state = cJSON_GetObjectItemCaseSensitive(json, "entrada")->valueint;
-        if(cJSON_GetObjectItemCaseSensitive(json, "saida")!=NULL){
-            mqtt_device[result].out_state = cJSON_GetObjectItemCaseSensitive(json, "saida")->valueint;
+        ptr = strtok(NULL, delim);
+        if(!strcmp(ptr, "temperatura")){
             mqtt_device[result].temp = cJSON_GetObjectItemCaseSensitive(json, "temperatura")->valueint;
-             mqtt_device[result].hmd = cJSON_GetObjectItemCaseSensitive(json, "umidade")->valueint;
+        }
+        else if(!strcmp(ptr, "umidade")){
+            mqtt_device[result].hmd = cJSON_GetObjectItemCaseSensitive(json, "umidade")->valueint;
+        }
+        else if(!strcmp(ptr, "entrada")){
+            mqtt_device[result].in_state = cJSON_GetObjectItemCaseSensitive(json, "entrada")->valueint;
+        }
+        else if(!strcmp(ptr, "estado")){
+            mqtt_device[result].in_state = cJSON_GetObjectItemCaseSensitive(json, "entrada")->valueint;
+            mqtt_device[result].out_state = cJSON_GetObjectItemCaseSensitive(json, "saida")->valueint;
         }
         
     }
@@ -114,7 +121,8 @@ void mqtt_publish(char* topic, char* payload)
 }
 
 void mqtt_subscribe(char * topic){
-     MQTTClient_subscribe(client, topic, 1);
+    printError(topic);
+    MQTTClient_subscribe(client, topic, 1);
 }
 
 int number_for_key(char *key)

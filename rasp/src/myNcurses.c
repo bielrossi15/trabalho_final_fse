@@ -166,8 +166,8 @@ void enviaNomeComodo()
     sprintf(data, "{ \"comodo\": \"%s\"}", mqtt_device[count_dispositivos].room);
     mqtt_publish(topic, data);
     clearThenBox(1);
-    char inscreveComodo[512] = "fse2020/170013278/";
-    strcat(inscreveComodo,mqtt_device[count_dispositivos].room);
+    char inscreveComodo[512];
+    sprintf(inscreveComodo,"fse2020/170013278/%s/#",mqtt_device[count_dispositivos].room);
     mapa[count_dispositivos].str = mqtt_device[count_dispositivos].room;
     mapa[count_dispositivos].n = count_dispositivos;
     mqtt_subscribe(inscreveComodo);
